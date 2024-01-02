@@ -1,4 +1,4 @@
-# Splitwise Backend Application
+# Splitpay 
 Splitpay is a collaborative finance management application designed to streamline the process of splitting and settling expenses among a group of users. The platform allows users to create groups, add expenses, and keep track of who owes whom.
 
 
