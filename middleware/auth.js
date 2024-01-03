@@ -14,13 +14,13 @@ const auth=(req,res,next)=>{
 
         }
         else{
-             res.status(404).json({message:"unauthorized user"});
+            return res.status(404).json({message:"unauthorized user"});
         }
 
         next();
 
     }catch(error){
-        res.status(404).json({message:"unauthorized user"});
+        return res.status(404).json({message:"unauthorized user"});
     }
 
 
