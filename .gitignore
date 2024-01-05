@@ -3,3 +3,4 @@ node_modules/
 redis-data/
 db_data/
 schema.sql
+.env.dev
