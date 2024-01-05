@@ -1,7 +1,7 @@
     class Graph {
         constructor(numVertices) {
             this.numVertices = numVertices;
-            this.adjMatrix = new Array(numVertices).fill(0).map(() => new Array(numVertices).fill(0));
+            this.adjMatrix = new Array(numVertices).fill(0.00).map(() => new Array(numVertices).fill(0.00));
         }
     
         addEdge(fromVertex, toVertex, weight) {

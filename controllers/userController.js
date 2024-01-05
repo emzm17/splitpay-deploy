@@ -66,10 +66,6 @@ const getallgroup= async(req,res)=>{
 }
 
 const signup=async(req,res)=>{
-    // Existing user check
-      // hash password
-      // user creation 
-      // token generate
 
       const {name,email,password}=req.body;
       
@@ -86,11 +82,12 @@ const signup=async(req,res)=>{
          
          
          const user=await db.query(
-            `INSERT INTO users(name,email,password) values(?,?,?)`,[name,email,hashedpassword]
+            `INSERT INTO users(name,email,password,totalAmount,totalOwe,totalOwed) values(?,?,?,?,?,?)`,[name,email,hashedpassword,0,0,0]
          );
 
+         // Generate the token with Payload+SECRET_KEY
          const token=jwt.sign({
-            email:user.email,id:user.user_id
+            email:user.email,id:user.user_id   // Payload create 
          },process.env.SECRET_KEY);
          res.status(201).json({
             user:user,result:token

@@ -29,7 +29,7 @@ function minimun_amount(amount){
     // console.log(maximun_amount(amount));
     
     const logEntries=[];
-    function min_cash_flow(amount){    
+    async function min_cash_flow(amount){    
     let maxi_credit=maximun_amount(amount);
     let mini_debit=minimun_amount(amount);
     
@@ -42,11 +42,26 @@ function minimun_amount(amount){
     amount[mini_debit]+=mini;
     
     // console.log(mini_debit+" pay "+mini+" to "+maxi_credit);
+ 
+ 
+
+
     const logEntry = {
         payer: mini_debit,
         payee: maxi_credit,
         amount: mini
     };
+    //  const totalOwedAmountandOweAmount=await db.query(
+    //     `select * from users where user_id=? `,[maxi_credit]
+    //  );
+    //  console.log(totalOwedAmountandOweAmount);
+
+
+    
+    // const updateUserAmount=await db.query(
+    //     `update users set totalOwe`
+    // ) 
+
     logEntries.push(logEntry);
     min_cash_flow(amount);
     }
@@ -79,14 +94,16 @@ function minimun_amount(amount){
                 let expense = expenses[0][i];
                 // console.log(expense);
     
-                const amount = parseFloat(expense.amount) / size;
-    
+                const amount = (expense.amount) / size;
+                const actualAmount=amount.toFixed(2);
+                // console.log(actualAmount);
                 for (let idx = 0; idx < group[0][0].users_id.length; idx++) {
                     let group_item = group[0][0].users_id[idx];
                     if (group_item == expense.payer_id) {
                               continue;
                     } else {
-                         settlement_graph.addEdge(group_item,expense.payer_id,amount);
+                         settlement_graph.addEdge(group_item,expense.payer_id,actualAmount);
+                         
                     }
                 }
             }
@@ -100,11 +117,39 @@ function minimun_amount(amount){
            
             for(let i=1;i<maxi_size+1;i++){
                 for(let j=1;j<maxi_size+1;j++){
-                   amount[i]+=( parseInt(settlement_graph.adjMatrix[j][i])-parseInt(settlement_graph.adjMatrix[i][j]));
+                   amount[i]+=( parseFloat(settlement_graph.adjMatrix[j][i])-parseFloat(settlement_graph.adjMatrix[i][j]));
                 }
              }        
  
         min_cash_flow(amount);
+
+
+           
+            for(let i=0;i<logEntries.length;i++){
+                  const updateAmount=await db.query(
+                    `select * from users where user_id=?`,[logEntries[i].payer]
+                  );
+                //   console.log((updateAmount[0][0].totalOwe));
+                  const updateAmounttotalOwe=parseFloat(updateAmount[0][0].totalOwe)-logEntries[i].amount;
+               
+                //   console.log(updateAmounttotalOwe)
+                  const updatedAmounttotOwed=await db.query(
+                        `update users set totalOwe=? where user_id=?`,[updateAmounttotalOwe,parseInt(logEntries[i].payer)]
+                  );
+                  const updatetotalAmount=await db.query(
+                    `select * from users where user_id=?`,[logEntries[i].payee]
+                  );
+                  let updatetotalAmountRecord=parseFloat(updatetotalAmount[0][0].totalOwed)-logEntries[i].amount;
+                  if(updatetotalAmountRecord<0){
+                    updatetotalAmountRecord=0;
+                  }
+                  const updatedtotalAmount=await db.query(
+                        `update users set totalOwed=? where user_id=?`,[updatetotalAmountRecord,parseInt(logEntries[i].payee)]
+                  );
+               
+                // console.log(updatetotalAmountRecord)
+            }
+            
         
             return res.send({ settlement:logEntries });
             
