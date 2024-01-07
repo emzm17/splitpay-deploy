@@ -3,7 +3,7 @@ const jwt=require('jsonwebtoken');
 const bcryptjs=require('bcryptjs');
 const redis=require('redis');
 const dotenv=require('dotenv');
-dotenv.config();
+dotenv.config({ path: '.env.prod' });
 const redisclient = redis.createClient({
     password: process.env.REDIS_PASSWORD,
     socket: {
