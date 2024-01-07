@@ -1,6 +1,6 @@
 const mysql = require("mysql2");
 const dotenv = require("dotenv");
-dotenv.config({ path: '.env.dev' });
+dotenv.config({ path: '.env.prod' });
 
 const connection = mysql
   .createPool({
