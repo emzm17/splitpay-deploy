@@ -85,6 +85,7 @@ const signup=async(req,res)=>{
             `INSERT INTO users(name,email,password,totalAmount,totalOwe,totalOwed) values(?,?,?,?,?,?)`,[name,email,hashedpassword,0,0,0]
          );
 
+       
          // Generate the token with Payload+SECRET_KEY
          const token=jwt.sign({
             email:user.email,id:user.user_id   // Payload create 
@@ -117,7 +118,9 @@ try {
     const existingCurrUser = existingUser[0][0];
     // console.log(existingCurrUser);
 
-
+    await db.query(
+        'update users set friend_list=? where user_id=?',[JSON.stringify([existingCurrUser.user_id]),existingCurrUser.user_id]
+     );
   
     bcryptjs.compare(password, existingCurrUser.password ,(err,result)=>{
         if(err){
