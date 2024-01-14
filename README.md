@@ -21,11 +21,6 @@ Splitpay is a collaborative finance management application designed to streamlin
 - Redis server
 - Secret Key
   
-## Run the app
-
-
-    docker-compose build
-    docker-compose up
 
     
 ## API
