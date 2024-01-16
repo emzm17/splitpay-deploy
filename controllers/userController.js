@@ -17,10 +17,26 @@ redisclient.connect();
 
 
 const getallUser = async (req,res)=>{
-    const users= await db.query(
-        `SELECT * FROM users`
-       )
-    return res.status(201).json(users[0]);
+    let keyname='alluser';
+    let cached=await redisclient.get(keyname);
+    if(cached){
+        return res.status(201).json(JSON.parse(cached));
+
+    }
+    else{
+
+    try{
+        const users= await db.query(
+            `SELECT * FROM users`
+           )
+        redisclient.set(keyname,JSON.stringify((users)),{EX:30});
+        return res.status(201).json(users[0]);
+
+    }catch(error){
+         return res.status(501).json({message:"something went wrong"});
+    }
+ }
+   
 }
 
 const getallgroup= async(req,res)=>{
@@ -211,28 +227,44 @@ const acceptRequest=async(req,res)=>{
    }
 }
 const getAllfriend=async(req,res)=>{
+    let keyname='allfriends';
+    let cached=await redisclient.get(keyname);
+    if(cached){
+        return res.status(201).json(JSON.parse(cached));
+    }
+    else{
       try{
          const friends=await db.query(
             `select * from users where user_id=?`,[req.user_id]
          );
-        //  console.log(friends[0][0]);
+         redisclient.set(keyname,JSON.stringify((friends[0][0])),{EX:30});
          return res.status(201).json(friends[0][0]);
       }
       catch(error){
         return res.status(501).json({message:"internal server error"});
       }
+    }
 }
 
 const getrequestfriendList=async(req,res)=>{
-     try{
-         const friendrequest=await db.query(
-            `select * from friendships where user2_id=?`,[req.user_id]
-         );
-         return res.status(201).json(friendrequest[0]);
-     }
-     catch(error){
-          return res.status(501).json({message:"internal server error"});
-     }
+    let keyname='friendfriends';
+    let cached=await redisclient.get(keyname);
+    if(cached){
+        return res.status(201).json(JSON.parse(cached));
+    }
+    else{
+        try{
+            const friendrequest=await db.query(
+               `select * from friendships where user2_id=?`,[req.user_id]
+            );
+            redisclient.set(keyname,JSON.stringify((friendrequest[0])),{EX:30});
+            return res.status(201).json(friendrequest[0]);
+        }
+        catch(error){
+             return res.status(501).json({message:"internal server error"});
+        }
+    }
+    
 }
     
 

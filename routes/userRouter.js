@@ -7,7 +7,7 @@ const userRouter = express.Router();
 
 userRouter.get('/',auth,getallUser);
 
-userRouter.get('/groups',auth,getallgroup);
+userRouter.get('/user-involved-groups',auth,getallgroup);
 
 userRouter.post('/send-friend-request/:userId',auth,sendRequest);
 
