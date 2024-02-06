@@ -8,11 +8,11 @@ const groupCreate= async (req,res)=>{
         users_id.push(parseInt(req.user_id));
          // console.log(temp_string);
          try{
-            const new_group=await db.query(
-               `INSERT INTO group_s (name,users_id,created_by) value (?,?,?)`,[name,JSON.stringify(users_id),created_by]
+            const new_group = await db.query(
+               `INSERT INTO group_s (name,users_id,created_by) values ($1,$2,$3)`,[name,JSON.stringify(users_id),created_by]
             );
             
-            res.send({message:"new group created"});
+          res.status(201).json({message:"new group created"});
 
          }catch(error){
             console.log(error);

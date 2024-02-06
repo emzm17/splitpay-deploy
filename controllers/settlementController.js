@@ -70,35 +70,35 @@ function minimun_amount(amount){
     const settlement= async (req, res) => {
         const id = req.params.id;
         try {
-            const expenses = await db.query(`select * from expenses where group_id=?`, [id]);
-            const group = await db.query(`select * from group_s where id=?`, [id]);
-            const delete_expense = await db.query('delete from expenses where group_id=?',[id]);
+            const expenses = await db.query(`select * from expenses where group_id=$1`, [id]);
+            const group = await db.query(`select * from group_s where id=$1`, [id]);
+            const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
             // console.log(expenses);
             // console.log(group);
-            if(expenses[0].length==0){
+            if(expenses.rows.length==0){
                 return res.json({message:"all settlement is complete"})
             }
     
             var maps = new Map();
-            const size = group[0][0].users_id.length;
+            const size = group.rows[0].users_id.length;
             var maxi_size=0;
             for(var i=0;i<size;i++){
-                    maxi_size=Math.max(maxi_size,parseInt(group[0][0].users_id[i]));
+                    maxi_size=Math.max(maxi_size,parseInt(group.rows[0].users_id[i]));
             }
             let settlement_graph=new graph(maxi_size+1);
             // for(let i=0;i<group[0][0].users_id.length;i++){
             //       settlement_graph.addVertex(group[0][0].users_id[i]);
             // }
     
-            for (let i = 0; i < expenses[0].length; i++) {
-                let expense = expenses[0][i];
+            for (let i = 0; i < expenses.rows.length; i++) {
+                let expense = expenses.rows[i];
                 // console.log(expense);
     
                 const amount = (expense.amount) / size;
                 const actualAmount=amount.toFixed(2);
                 // console.log(actualAmount);
-                for (let idx = 0; idx < group[0][0].users_id.length; idx++) {
-                    let group_item = group[0][0].users_id[idx];
+                for (let idx = 0; idx < group.rows[0].users_id.length; idx++) {
+                    let group_item = group.rows[0].users_id[idx];
                     if (group_item == expense.payer_id) {
                               continue;
                     } else {
@@ -126,25 +126,27 @@ function minimun_amount(amount){
 
            
             for(let i=0;i<logEntries.length;i++){
-                  const updateAmount=await db.query(
-                    `select * from users where user_id=?`,[logEntries[i].payer]
+                  const payer=logEntries[i].payer
+                  const updateAmount = await db.query(
+                    `select total_owe from users where user_id=$1`,[payer]
                   );
-                //   console.log((updateAmount[0][0].totalOwe));
-                  const updateAmounttotalOwe=parseFloat(updateAmount[0][0].totalOwe)-logEntries[i].amount;
+                  // console.log(updateAmount);
+                  // console.log((updateAmount[0][0].totalOwe));
+                  const updateAmounttotalOwe=parseFloat(updateAmount.rows[0].total_owe)-logEntries[i].amount;
                
                 //   console.log(updateAmounttotalOwe)
-                  const updatedAmounttotOwed=await db.query(
-                        `update users set totalOwe=? where user_id=?`,[updateAmounttotalOwe,parseInt(logEntries[i].payer)]
+                  const updatedAmounttotOwed = await db.query(
+                        `update users set total_owe=$1 where user_id=$2`,[updateAmounttotalOwe,parseInt(logEntries[i].payer)]
                   );
-                  const updatetotalAmount=await db.query(
-                    `select * from users where user_id=?`,[logEntries[i].payee]
+                  const updatetotalAmount = await db.query(
+                    `select total_owed from users where user_id=$1`,[logEntries[i].payee]
                   );
-                  let updatetotalAmountRecord=parseFloat(updatetotalAmount[0][0].totalOwed)-logEntries[i].amount;
+                  let updatetotalAmountRecord=parseFloat(updatetotalAmount.rows[0].total_owed)-logEntries[i].amount;
                   if(updatetotalAmountRecord<0){
                     updatetotalAmountRecord=0;
                   }
                   const updatedtotalAmount=await db.query(
-                        `update users set totalOwed=? where user_id=?`,[updatetotalAmountRecord,parseInt(logEntries[i].payee)]
+                        `update users set total_owed=$1 where user_id=$2`,[updatetotalAmountRecord,parseInt(logEntries[i].payee)]
                   );
                
                 // console.log(updatetotalAmountRecord)

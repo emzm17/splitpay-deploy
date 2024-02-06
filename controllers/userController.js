@@ -29,8 +29,8 @@ const getallUser = async (req,res)=>{
         const users= await db.query(
             `SELECT * FROM users`
            )
-        redisclient.set(keyname,JSON.stringify((users)),{EX:30});
-        return res.status(201).json(users[0]);
+        redisclient.set(keyname,JSON.stringify((users.rows)),{EX:30});
+        return res.status(201).json(users.rows);
 
     }catch(error){
          return res.status(501).json({message:"something went wrong"});
@@ -83,22 +83,21 @@ const getallgroup= async(req,res)=>{
 
 const signup=async(req,res)=>{
 
+
       const {name,email,password}=req.body;
       
       try{
-         const existingUser=await db.query(
-            `SELECT * FROM users WHERE email=?`,[email]
+         const existingUser= await db.query(
+            `SELECT * FROM users WHERE email=$1`,[email]
          );
-         if(existingUser[0].length > 0){
+         if(existingUser.rows.length > 0){
             return res.status(400).json({message:"user already exist"});
          } 
-
-
          const hashedpassword=await bcryptjs.hash(password,10);
          
          
          const user=await db.query(
-            `INSERT INTO users(name,email,password,totalAmount,totalOwe,totalOwed) values(?,?,?,?,?,?)`,[name,email,hashedpassword,0,0,0]
+            `INSERT INTO users(name,email,password,total_amount,total_owe,total_owed) values($1,$2,$3,$4,$5,$6)`,[name,email,hashedpassword,0,0,0]
          );
 
        
@@ -107,9 +106,9 @@ const signup=async(req,res)=>{
             email:user.email,id:user.user_id   // Payload create 
          },process.env.SECRET_KEY);
          res.status(201).json({
-            user:user,result:token
-           
+            result:token
          });
+;
          
       } catch(error){
           console.log(error);
@@ -124,18 +123,18 @@ try {
    
    
    const existingUser = await db.query(
-      `SELECT * FROM users WHERE email=?`, [email]
+      `SELECT * FROM users WHERE email=$1`, [email]
   );
    
-    if (existingUser[0].length === 0) {
+    if (existingUser.rows.length === 0) {
         return res.status(404).json({ message: "User not found" });
     }
 
-    const existingCurrUser = existingUser[0][0];
+    const existingCurrUser = existingUser.rows[0]
     // console.log(existingCurrUser);
 
-    await db.query(
-        'update users set friend_list=? where user_id=?',[JSON.stringify([existingCurrUser.user_id]),existingCurrUser.user_id]
+    const updateUserFriend = await db.query(
+        'update users set friend_list=$1 where user_id=$2',[JSON.stringify([existingCurrUser.user_id]),existingCurrUser.user_id]
      );
   
     bcryptjs.compare(password, existingCurrUser.password ,(err,result)=>{
@@ -169,23 +168,22 @@ const sendRequest=async(req,res)=>{
     const friend=req.params.userId;
     try{
         const checkUser= await db.query(
-            `SELECT * FROM users where user_id=?`,[friend]
+            `SELECT * FROM users where user_id=$1`,[friend]
            );
-           console.log(checkUser[0]);
-           if(checkUser[0].length===0){
+           if(checkUser.rows.length===0){
              return res.status(404).json({message: "no user found"});
            }
            const userList= await db.query(
-            `SELECT * FROM users where user_id=?`,[user]
+            `SELECT * FROM users where user_id=$1`,[user]
            );
-           const friendlist=userList[0][0].friend_list;
+           const friendlist=userList.rows[0].friend_list;
             for(let j=0;j<friendlist.length;j++){
               if(friend==parseInt(friendlist[j])){
                 return res.status(404).json({message:"user already in friend list"});
               }  
         } 
          const friendrequest=await db.query(
-        `insert into friendships (user1_id,user2_id) values(?,?)`,[user,friend]
+        `insert into friendships (user1_id,user2_id) values($1,$2)`,[user,friend]
     );
    return  res.status(201).json({message:"friend request sent successfully"});
 
@@ -198,27 +196,30 @@ const acceptRequest=async(req,res)=>{
     try{
      const friend=req.params.userId;    
      const currentuser=await db.query(
-        `select * from users where user_id=?`,[req.user_id]
+        `select * from users where user_id=$1`,[req.user_id]
     )
     const currentuser1=await db.query(
-        `select * from users where user_id=?`,[friend]
+        `select * from users where user_id=$1`,[friend]
     )
-    let friendlist=currentuser[0][0].friend_list;
-    let friendlist1=currentuser1[0][0].friend_list;
+    let friendlist=currentuser.rows[0].friend_list;
+    let friendlist1=currentuser1.rows[0].friend_list;
+  
     friendlist.push(parseInt(friend));
     friendlist1.push(parseInt(req.user_id));
+    console.log(friendlist);
+    console.log(friendlist1);
     
      const updateFriendlist=await db.query(
-        'update users set friend_list=? where user_id=?',[JSON.stringify(friendlist),req.user_id]
+        'update users set friend_list=$1 where user_id=$2',[JSON.stringify(friendlist),req.user_id]
      );
 
      const updateFriendlist1=await db.query(
-        'update users set friend_list=? where user_id=?',[JSON.stringify(friendlist1),friend]
+        'update users set friend_list=$1 where user_id=$2',[JSON.stringify(friendlist1),friend]
      );
 
      
      const deleterequest=await db.query(
-        `delete from friendships where user1_id=? and user2_id=?`,[friend,req.user_id]
+        `delete from friendships where user1_id=$1 and user2_id=$2`,[friend,req.user_id]
      );
      return res.status(201).json({message:"friend accept"});
    }
@@ -235,10 +236,10 @@ const getAllfriend=async(req,res)=>{
     else{
       try{
          const friends=await db.query(
-            `select * from users where user_id=?`,[req.user_id]
+            `select * from users where user_id=$1`,[req.user_id]
          );
-         redisclient.set(keyname,JSON.stringify((friends[0][0])),{EX:30});
-         return res.status(201).json(friends[0][0]);
+         redisclient.set(keyname,JSON.stringify((friends.rows[0].friend_list)),{EX:30});
+         return res.status(201).json(friends.rows[0].friend_list);
       }
       catch(error){
         return res.status(501).json({message:"internal server error"});
@@ -255,10 +256,10 @@ const getrequestfriendList=async(req,res)=>{
     else{
         try{
             const friendrequest=await db.query(
-               `select * from friendships where user2_id=?`,[req.user_id]
+               `select * from friendships where user2_id=$1`,[req.user_id]
             );
-            redisclient.set(keyname,JSON.stringify((friendrequest[0])),{EX:30});
-            return res.status(201).json(friendrequest[0]);
+            redisclient.set(keyname,JSON.stringify((friendrequest.rows)),{EX:30});
+            return res.status(201).json(friendrequest.rows);
         }
         catch(error){
              return res.status(501).json({message:"internal server error"});

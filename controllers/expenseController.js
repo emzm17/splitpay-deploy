@@ -20,11 +20,11 @@ const getallExpense = async(req,res)=>{
         );
     
         // console.log("Group Length:", group);
-        if (group[0].length===0) {
+        if (group.rows.length===0) {
             return res.status(404).json({ message: "No expense found" });
         }
-    
-        res.status(201).json(group[0]);
+
+        res.status(201).json(group.rows);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Something went wrong" });
@@ -51,15 +51,15 @@ const getparticularExpense=async(req,res)=>{
             // console.log('first time cached');
             const id=req.params.id;
             const group = await db.query(
-                `SELECT * FROM expenses where  group_id=?`,[id]
+                `SELECT * FROM expenses where group_id=$1`,[id]
             );
         
             // console.log("Group Length:", group);
-            if (group[0].length===0) {
+            if (group.rows.length===0) {
                 return res.status(404).json({ message: "No expense found" });
             }
-            redisconnection.set(keyname,JSON.stringify((group[0])),{EX:30});
-           return  res.json(group[0]);
+            redisconnection.set(keyname,JSON.stringify((group.rows)),{EX:30});
+           return  res.json(group.rows);
         } catch (error) {
             console.error(error);
             res.status(500).json({ message: "Something went wrong" });
@@ -74,42 +74,48 @@ const createExpense=async(req,res)=>{
         
    try{
       const new_expense=await db.query(
-         `INSERT INTO expenses (amount,description,payer_id,group_id) value (?,?,?,?)`,[amount,description,payer_id,group_id]
+         `INSERT INTO expenses (amount,description,payer_id,group_id) values ($1,$2,$3,$4)`,[amount,description,payer_id,group_id]
       );
       const group=await db.query(
-        `SELECT * FROM group_s where id=?`,[group_id]
+        `SELECT * FROM group_s where id=$1`,[group_id]
       );
-      if(group[0].length===0){
+      if(group.rows.length===0){
         return res.json({message:"no group present"});
     }
 
     
-    for(let i=0;i<group[0].length;i++){
-              const currgroup=JSON.stringify(group[0][i].users_id);
+    for(let i=0;i<group.rows.length;i++){
+              const currgroup=JSON.stringify(group.rows[0].users_id);
               let sz=0;
               for(let i=0;i<currgroup.length;i++){
-                 if(currgroup[i]!=',' && currgroup[i]!=']'&& currgroup[i]!='[') sz++;
+                 if(currgroup[i]!=',' && currgroup[i]!=']' && currgroup[i]!='[') sz++;
               }
             //   console.log(sz);
               const eachContribute=amount/sz;
               const eachContributeRound=eachContribute.toFixed(2);
             //   console.log(eachContribute);
               const totalAmount=amount-eachContributeRound;
-              const currentUserAmount=await db.query(
-                `SELECT totalAmount from users where user_id =?`,[payer_id]
+              const currentUserAmount = await db.query(
+                `SELECT total_amount from users where user_id =$1`,[payer_id]
               );
 
-            const totalAmountUser=parseInt(currentUserAmount[0][0].totalAmount)+totalAmount;
-            console.log(totalAmountUser);
+
+            const totalAmountUser=parseInt(currentUserAmount.rows[0].total_amount)+amount
+            // console.log(currentUserAmount.rows[0]+toa );
            
               const updateUserAmount= await db.query(
-                'UPDATE users set totalAmount=?,totalOwed=? where user_id=?',[totalAmountUser,totalAmount,payer_id]
+                'UPDATE users set total_amount=$1,total_owed=$2 where user_id=$3',[totalAmountUser,totalAmount,payer_id]
               );
 
                for(let j=0;j<currgroup.length;j++){
                       if(payer_id!=currgroup[j] && currgroup[j]!=',' && currgroup[j]!='[' && currgroup[j]!=']'){
+                        const currentUserAmount = await db.query(
+                            `SELECT total_amount from users where user_id =$1`,[currgroup[j]]
+                          );
+                          const totalAmountUser=parseInt(currentUserAmount.rows[0].total_amount)+eachContribute
+            
                           const youOwe= await db.query(
-                            `UPDATE users set totalOwe=? where user_id=?`,[eachContributeRound,currgroup[j]]
+                            `UPDATE users set total_owe=$1,total_amount=$2 where user_id=$3`,[eachContributeRound,totalAmountUser,currgroup[j]]
                           );
                       }
                }
