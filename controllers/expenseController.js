@@ -1,7 +1,7 @@
 const db=require('../database');
 const dotenv=require('dotenv');
 const redis=require('redis');
-dotenv.config({ path: '.env.prod' });
+dotenv.config({ path: '.env.dev' });
 
 const redisconnection = redis.createClient({
     password: process.env.REDIS_PASSWORD,

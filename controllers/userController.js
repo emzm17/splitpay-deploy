@@ -3,7 +3,7 @@ const jwt=require('jsonwebtoken');
 const bcryptjs=require('bcryptjs');
 const redis=require('redis');
 const dotenv=require('dotenv');
-dotenv.config({ path: '.env.prod' });
+dotenv.config({ path: '.env.dev' });
 const redisclient = redis.createClient({
     password: process.env.REDIS_PASSWORD,
     socket: {
@@ -55,23 +55,25 @@ const getallgroup= async(req,res)=>{
         const groups=await db.query(
            `SELECT * FROM group_s`
         );
-        if(groups[0].length===0){
+      
+        if(groups.rows.length==0){
             return res.json({message:"no group present"});
         }
          const total_groups=[];
-        for(let i=0;i<groups[0].length;i++){
-                  const currgroup=JSON.stringify(groups[0][i].users_id);
+        //  console.log(groups.rows.length);
+        for(let i=0;i<groups.rows.length;i++){
+                  const currgroup=JSON.stringify(groups.rows[i].users_id);
                    for(let j=0;j<currgroup.length;j++){
                     // console.log(currgroup[j]);
                      if(id===parseInt(currgroup[j])){
-                         total_groups.push(groups[0][i]);
+                         total_groups.push(groups.rows[i]);
                          break;
                      }
                    }
         }
         
         redisclient.set(keyname,JSON.stringify((total_groups)),{EX:30});
-        res.send(total_groups);
+        res.status(201).json(total_groups);
      }catch(error){
         console.log(error);
         res.status(500).json({message:"something went wrong"});
@@ -91,13 +93,14 @@ const signup=async(req,res)=>{
             `SELECT * FROM users WHERE email=$1`,[email]
          );
          if(existingUser.rows.length > 0){
+            console.log(existingUser.rows)
             return res.status(400).json({message:"user already exist"});
          } 
          const hashedpassword=await bcryptjs.hash(password,10);
          
          
          const user=await db.query(
-            `INSERT INTO users(name,email,password,total_amount,total_owe,total_owed) values($1,$2,$3,$4,$5,$6)`,[name,email,hashedpassword,0,0,0]
+            `INSERT INTO users(name,email,password,total_amount,total_owe,total_owed) values($1,$2,$3,$4,$5,$6)`,[name,email,hashedpassword,0.0,0.0,0.0]
          );
 
        
@@ -147,7 +150,9 @@ try {
             }, process.env.SECRET_KEY);
         
            return res.status(201).json({
-                user: existingCurrUser, result: token
+              
+                User:existingCurrUser,
+                result: token,
             });
         
         }
