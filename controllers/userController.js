@@ -39,7 +39,7 @@ const getallUser = async (req,res)=>{
    
 }
 
-const getallgroup= async(req,res)=>{
+const getallgroup= async(req,res)=> {
  
     let keyname='getappGroups';
     let cached=await redisclient.get(keyname);
@@ -55,30 +55,30 @@ const getallgroup= async(req,res)=>{
         const groups=await db.query(
            `SELECT * FROM group_s`
         );
-        if(groups[0].length===0){
+      
+        if(groups.rows.length==0){
             return res.json({message:"no group present"});
         }
          const total_groups=[];
-        for(let i=0;i<groups[0].length;i++){
-                  const currgroup=JSON.stringify(groups[0][i].users_id);
+        //  console.log(groups.rows.length);
+        for(let i=0;i<groups.rows.length;i++){
+                  const currgroup=JSON.stringify(groups.rows[i].users_id);
                    for(let j=0;j<currgroup.length;j++){
                     // console.log(currgroup[j]);
                      if(id===parseInt(currgroup[j])){
-                         total_groups.push(groups[0][i]);
+                         total_groups.push(groups.rows[i]);
                          break;
                      }
                    }
         }
         
         redisclient.set(keyname,JSON.stringify((total_groups)),{EX:30});
-        res.send(total_groups);
+        res.status(201).json(total_groups);
      }catch(error){
         console.log(error);
         res.status(500).json({message:"something went wrong"});
      }
-     
     }
-    
 }
 
 const signup=async(req,res)=>{
