@@ -1,5 +1,5 @@
 const express=require('express');
-const{groupCreate,getallexpenseGroup} = require('../controllers/groupController');
+const{groupCreate,getallparticularGroup,getAllGroup} = require('../controllers/groupController');
 const auth=require('../middleware/auth');
 
 
