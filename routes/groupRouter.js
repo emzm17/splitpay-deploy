@@ -11,10 +11,10 @@ const groupRouter=express.Router();
 groupRouter.post('/create',auth,groupCreate)
 
 
-   
+groupRouter.get('/',auth,getAllGroup)   
 
- // get all expense of that group;
-groupRouter.get('/:id',auth,getallexpenseGroup)
+// get particular group by id
+groupRouter.get('/:id',auth,getallparticularGroup)
 
 
 
