@@ -1,11 +1,13 @@
 const express=require('express');
-const {getallUser,getallgroup,signup,signin,sendRequest,acceptRequest,getAllfriend,getrequestfriendList} = require('../controllers/userController')
+const {getallUser,getallgroup,signup,signin,sendRequest,acceptRequest,getAllfriend,getrequestfriendList,particularUser} = require('../controllers/userController')
 const auth=require('../middleware/auth');
 const userRouter = express.Router();
 
 
 
 userRouter.get('/',auth,getallUser);
+
+userRouter.get('/:id',auth,particularUser)
 
 userRouter.get('/user-involved-groups',auth,getallgroup);
 
