@@ -39,6 +39,25 @@ const getallUser = async (req,res)=>{
    
 }
 
+
+const particularUser=async(req,res)=>{
+    try{
+        const userid=req.params.id
+        const user=await db.query(
+               `SELECT * FROM USERS WHERE user_id=$1`,[userid]
+        )
+        console.log(user);
+        if(user.rows.length<1){
+           res.status(201).json({messgae:"no user present"});
+        }
+        res.status(201).json(user.rows[0]);
+    }catch(error){
+        res.status(500).json({message:"something went wrong"});
+    }
+   
+
+}
+
 const getallgroup= async(req,res)=>{
  
     let keyname='getappGroups';
@@ -293,5 +312,5 @@ const getrequestfriendList=async(req,res)=>{
 
 
 module.exports={
-    getallUser,getallgroup,signup,signin,sendRequest,acceptRequest,getAllfriend,getrequestfriendList
+    getallUser,getallgroup,signup,signin,sendRequest,acceptRequest,getAllfriend,getrequestfriendList,particularUser
 }
