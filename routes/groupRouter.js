@@ -1,20 +1,24 @@
 const express=require('express');
-const{groupCreate,getallparticularGroup,getAllGroup} = require('../controllers/groupController');
+const{groupCreate,getallusergroup,getAll,getparticulargroup} = require('../controllers/groupController');
+
 const auth=require('../middleware/auth');
-
-
-
 const groupRouter=express.Router();
 
 
 // creation of group
 groupRouter.post('/create',auth,groupCreate)
 
+// get all groups where current user involve
+groupRouter.get('/',auth,getallusergroup)
 
-groupRouter.get('/',auth,getAllGroup)   
+// get all groups
+groupRouter.get('/all',auth,getAll);
 
-// get particular group by id
-groupRouter.get('/:id',auth,getallparticularGroup)
+
+// get particular group
+groupRouter.get('/:id',auth,getparticulargroup)
+
+
 
 
 
