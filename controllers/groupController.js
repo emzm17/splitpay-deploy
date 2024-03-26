@@ -78,15 +78,6 @@ const groupCreate = async (req, res) => {
   }
 };
 
-// const getAllExpenseGroup = async (req, res) => {
-//   const groupId = req.params.id;
-//   try {
-//     const expenseList = await groupService.getAllExpenseGroup(groupId);
-//     res.status(200).json(expenseList);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Something went wrong' });
-//   }
-// }
 const getallusergroup = async (req, res) => {
   try {
     const groups = await groupService.getAllUserGroups(req.user_id);
