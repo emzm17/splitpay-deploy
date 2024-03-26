@@ -10,14 +10,34 @@ const signup = async (req, res) => {
   try {
     const existingUser = await userService.getUserByEmail(email);
    
+
     if (existingUser.rows.length > 1) {
       return res.status(400).json({ message: 'user already exists' });
-    }
-
+}
     const hashedPassword = await bcryptjs.hash(password, 10);
   
     const user = await userService.createUser(name, email, hashedPassword);
     
+
+    const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
+    res.status(201).json({
+      result: token,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'something went wrong' });
+  }
+};
+
+
+
+
+
+
+
+ const signup=async(req,res)=>{
+
+
 
     const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
     res.status(201).json({
@@ -96,9 +116,11 @@ const specificUser=async(req,res)=>{
 
 
 
+
 module.exports = {
   signup,
   signin,
   allUser,
   specificUser
 };
+
