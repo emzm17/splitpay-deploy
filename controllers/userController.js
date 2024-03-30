@@ -87,6 +87,9 @@ const specificUser=async(req,res)=>{
    try{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
+    if(specUser.rows.length<0){
+       return res.status(201).json({message:"no users"})
+    }
     const tempUser=specUser.rows[0];
     const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list}
     return res.status(201).json(user);    
