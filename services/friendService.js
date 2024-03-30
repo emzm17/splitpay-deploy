@@ -1,5 +1,5 @@
 // services/friendService.js
-const db = require('../database');
+const db = require('../utils/database');
 const redisClient=require('../utils/redis');
 const getFriendRequests = async (userId) => {
   const keyName = 'friendfriends';

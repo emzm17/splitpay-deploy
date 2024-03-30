@@ -1,5 +1,5 @@
 // services/ProfileService.js
-const db = require('../database'); // Assuming db is your database connection
+const db = require('../utils/database'); // Assuming db is your database connection
 const bcryptjs = require('bcryptjs');
 
 const getUserByEmail = async (email) => {

@@ -1,5 +1,5 @@
 // services/groupService.js
-const db = require('../database');
+const db = require('../utils/database');
 const redisClient=require('../utils/redis');
 redisClient.connect()
 

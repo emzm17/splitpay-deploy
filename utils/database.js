@@ -1,6 +1,6 @@
 const pool=require('pg').Pool
 const dotenv = require("dotenv");
-dotenv.config({ path: '.env.dev' });
+dotenv.config({ path: '.env.prod' });
 
 const connection = new pool({
    host: process.env.DB_HOST,
@@ -8,8 +8,7 @@ const connection = new pool({
    password:process.env.DB_password,
    database:process.env.DB_database,
    port: process.env.DB_PORT,
-   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
-   
+   ssl: {} 
 })
 
 

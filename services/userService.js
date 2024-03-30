@@ -1,5 +1,5 @@
 // services/userService.js
-const db = require('../database');
+const db = require('../utils/database');
 const bcryptjs = require('bcryptjs');
 
 const getUserByEmail = async (email) => {

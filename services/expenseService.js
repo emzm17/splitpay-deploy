@@ -1,4 +1,4 @@
-const db = require("../database");
+const db = require("../utils/database");
 const redisclient = require("../utils/redis");
 const dotenv = require("dotenv");
 dotenv.config();

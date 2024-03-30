@@ -2,7 +2,6 @@
 const userService = require('../services/userService');
 const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
-const db = require('../database');
 
 const signup = async (req, res) => {
   const { name, email, password } = req.body;
