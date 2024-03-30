@@ -87,7 +87,7 @@ const specificUser=async(req,res)=>{
    try{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
-    if(specUser.rows.length<0){
+    if(specUser.rows.length==0){
        return res.status(201).json({message:"no users"})
     }
     const tempUser=specUser.rows[0];
