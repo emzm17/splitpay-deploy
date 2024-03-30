@@ -26,7 +26,7 @@ const specificUser=async(userId)=>{
     return specUser;
   } catch (error) {
     console.error(error);
-    throw new Error('No user present');
+    throw new Error('something went wrong');
   }
 }
 

@@ -52,6 +52,7 @@ const signin = async (req, res) => {
         );
 
         return res.status(201).json({
+          user_id:existingCurrUser.user_id,
           name: existingCurrUser.name,
           email: existingCurrUser.email,
           result: token,
@@ -87,11 +88,14 @@ const specificUser=async(req,res)=>{
    try{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
+    if(specUser.rows.length==0){
+      return res.status(201).json({message:"no such user is present"});
+    }
     const tempUser=specUser.rows[0];
     const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list}
-    return res.status(201).json(user);    
+    res.status(201).json(user);    
    }catch(error){
-    res.status(500).json({ message: 'Something went wrong' });
+    res.status(500).json({ message: error });
    }
 }
 
