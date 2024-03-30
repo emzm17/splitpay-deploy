@@ -48,7 +48,6 @@ const createGroup = async (name, usersId, createdBy) => {
     }
   };
 
-
   const getAllgroups= async()=> {
       try{
          const groups= await db.query('SELECT * FROM group_s');

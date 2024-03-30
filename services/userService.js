@@ -16,6 +16,7 @@ const createUser = async (name, email, hashedPassword) => {
     0,
   ]);
 };
+
 const specificUser=async(userId)=>{
   try {
      const specUser= await db.query(`select * from users where user_id=$1`, [

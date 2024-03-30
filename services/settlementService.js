@@ -26,6 +26,7 @@ function minimun_amount(amount){
     // console.log(minimun_amount(amount));
     // console.log(maximun_amount(amount));
     
+
     let logEntries=[];
     async function min_cash_flow(amount){    
     let maxi_credit=maximun_amount(amount);
@@ -140,14 +141,13 @@ function minimun_amount(amount){
                 // console.log(updatetotalAmountRecord)
             }
             
+
             const res=logEntries
             logEntries=[]
-            return { res };
-            
-        
+            return { res };        
     
         } catch (error) {
-            console.error(error);
+//             console.error(error);
           return  {message: 'Internal Server Error'};
         }
     };

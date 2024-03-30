@@ -4,22 +4,22 @@ const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
 const db = require('../database');
 
- const signup=async(req,res)=>{
-      const { name, email, password } = req.body;
+const signup = async (req, res) => {
+  const { name, email, password } = req.body;
 
-      try {
-        const existingUser = await userService.getUserByEmail(email);
+  try {
+    const existingUser = await userService.getUserByEmail(email);
+   
+
+    if (existingUser.rows.length > 1) {
+      return res.status(400).json({ message: 'user already exists' });
+}
+    const hashedPassword = await bcryptjs.hash(password, 10);
+  
+    const user = await userService.createUser(name, email, hashedPassword);
     
-        if (existingUser.rows.length > 0) {
-          return res.status(400).json({ message: 'user already exists' });
-        }
-    
-        const hashedPassword = await bcryptjs.hash(password, 10);
-    
-        await userService.createUser(name, email, hashedPassword);
-        const user=await userService.getUserByEmail(email);
-       
-    const token = jwt.sign({ email: user.rows[0].email, id: user.rows[0].user_id }, process.env.SECRET_KEY);
+
+    const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
     res.status(201).json({
       result: token,
     });
@@ -27,14 +27,14 @@ const db = require('../database');
     console.log(error);
     res.status(500).json({ message: 'something went wrong' });
   }
-}
+};
 
 const signin = async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const existingUser = await userService.getUserByEmail(email);
-
-    if (existingUser.rows.length == 0) {
+    if (existingUser.rows.length === 0) {
       return res.status(404).json({ message: 'User not found' });
     }
     const existingCurrUser = existingUser.rows[0]
@@ -89,8 +89,7 @@ const specificUser=async(req,res)=>{
     const specUser=await userService.specificUser(userId);
     const tempUser=specUser.rows[0];
     const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list}
-    return res.status(201).json(user);
-    
+    return res.status(201).json(user);    
    }catch(error){
     res.status(500).json({ message: 'Something went wrong' });
    }

@@ -39,7 +39,6 @@ const getparticulargroup=async(req,res)=>{
     try{
        const groups=await groupService.getparticulargroup(req.params.id)
        res.status(201).json(groups)
-
     }catch(error){
       res.status(500).json({ message:"something went wrong" });
     }
