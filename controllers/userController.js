@@ -71,10 +71,11 @@ const allUser=async(req,res)=>{
   try{
      const getAlluser=await userService.getAlluser();
      let allUser=[];
-     console.log(getAlluser.rows.length);
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
-      const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list}
+       console.log(tempUser);
+       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
+       total_owed:tempUser.total_owed}
        allUser.push(user);
      }
      res.status(200).json(allUser);
@@ -92,7 +93,8 @@ const specificUser=async(req,res)=>{
       return res.status(201).json({message:"no such user is present"});
     }
     const tempUser=specUser.rows[0];
-    const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list}
+    const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
+    total_owed:tempUser.total_owed}
     res.status(201).json(user);    
    }catch(error){
     res.status(500).json({ message: error });
@@ -103,10 +105,11 @@ const specificUser=async(req,res)=>{
 
 
 
+
 module.exports = {
   signup,
   signin,
   allUser,
-  specificUser
+  specificUser,
 };
 
