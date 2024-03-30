@@ -16,19 +16,6 @@ const createUser = async (name, email, hashedPassword) => {
     0,
   ]);
 };
-// const friendUpdate = async (userIds) => {
-//   try {
-//     await db.query('update users set friend_list=? where user_id=?', [
-//       JSON.stringify(userIds),
-//       userIds[0], // Assuming the first element of the array is the user_id
-//     ]);
-
-//     return { message: 'Friend list updated successfully' };
-//   } catch (error) {
-//     console.error(error);
-//     throw new Error('Error updating friend list');
-//   }
-// };
 
 const specificUser=async(userId)=>{
   try {
@@ -52,9 +39,15 @@ const getAlluser=async=>{
    }
    
 }
+const updateFriendlist=async(friendlist,userid)=>{
+   return db.query(
+    'update users set friend_list=$1 where user_id=$2',[JSON.stringify(friendlist),userid]
+   )
+}
 module.exports = {
   getUserByEmail,
   createUser,
   getAlluser,
-  specificUser
+  specificUser,
+  updateFriendlist
 };

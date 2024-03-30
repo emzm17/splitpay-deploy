@@ -11,18 +11,10 @@ const getAllExpenses = async () => {
 
 // Function to fetch expenses of a particular group from the database
 const getParticularGroupExpense = async (id) => {
-  const keyname = "getexpense";
-  const cached = await redisclient.get(keyname);
-
-  if (cached) {
-    return JSON.parse(cached);
-  } else {
     const expense = await db.query(`SELECT * FROM expenses where group_id=$1`, [
       id,
     ]);
-    redisclient.set(keyname, JSON.stringify(expense.rows), { EX: 30 });
     return expense.rows;
-  }
 };
 
 // create expense
