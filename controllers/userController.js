@@ -51,8 +51,9 @@ const signin = async (req, res) => {
         );
 
         return res.status(201).json({
+          user_id:existingCurrUser.user_id,
           name: existingCurrUser.name,
-          email: existingCurrUser.email,
+          email: existingCurrUser.email,  
           result: token,
         });
       } else {
