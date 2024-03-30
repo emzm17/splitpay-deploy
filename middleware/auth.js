@@ -9,7 +9,7 @@ const auth=(req,res,next)=>{
         let token=req.headers.authorization;
         if(token){
              token=token.split(" ")[1];
-             let user=jwt.verify(token,process.env.SECRET_KEY);
+             const user=jwt.verify(token,process.env.SECRET_KEY);
              req.user_id=user.id;
 
         }

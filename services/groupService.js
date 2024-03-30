@@ -47,22 +47,7 @@ const createGroup = async (name, usersId, createdBy) => {
       throw new Error('Something went wrong');
     }
   };
-  
-  // const getAllExpenseGroup = async (groupId) => {
-  //   try {
-  //     const expenseList = await db.query('SELECT * FROM expenses WHERE group_id = ?', [groupId]);
-  
-  //     if (expenseList[0].length === 0) {
-  //       throw new Error('No expense record found for this group');
-  //     }
-  
-  //     return expenseList[0];
-  //   } catch (error) {
-  //     console.error(error);
-  //     throw new Error('Something went wrong');
-  //   }
-  // };
-  
+
 
   const getAllgroups= async()=> {
       try{

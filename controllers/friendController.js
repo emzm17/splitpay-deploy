@@ -41,7 +41,11 @@ const getAllFriends = async (req, res) => {
 const sendFriendRequest = async (req, res) => {
   try {
     const userId = req.user_id; // Assuming user_id is available in the request
+
     const friendId = req.params.userId;
+
+    console.log(parseInt(userId));
+    console.log(friendId);
     const result = await friendService.sendFriendRequest(userId, friendId);
     res.status(201).json(result);
   } catch (error) {

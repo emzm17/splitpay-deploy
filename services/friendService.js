@@ -103,6 +103,7 @@ const sendFriendRequest = async (userId, friendId) => {
     }
 
     const userList = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+    console.log(userList.rows[0]);
     const friendList = userList.rows[0].friend_list;
 
     for (let j = 0; j < friendList.length; j++) {

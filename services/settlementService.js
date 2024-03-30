@@ -26,7 +26,7 @@ function minimun_amount(amount){
     // console.log(minimun_amount(amount));
     // console.log(maximun_amount(amount));
     
-    const logEntries=[];
+    let logEntries=[];
     async function min_cash_flow(amount){    
     let maxi_credit=maximun_amount(amount);
     let mini_debit=minimun_amount(amount);
@@ -63,7 +63,7 @@ function minimun_amount(amount){
             // console.log(expenses);
             // console.log(group);
             if(expenses.rows.length==0){
-                return res.json({message:"all settlement is complete"})
+                return {message:"all settlement is complete"}
             }
     
             // var maps = new Map();
@@ -140,8 +140,9 @@ function minimun_amount(amount){
                 // console.log(updatetotalAmountRecord)
             }
             
-        
-            return { logEntries };
+            const res=logEntries
+            logEntries=[]
+            return { res };
             
         
     
