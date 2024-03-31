@@ -72,7 +72,6 @@ const allUser=async(req,res)=>{
   try{
      const getAlluser=await userService.getAlluser();
      let allUser=[];
-     console.log(getAlluser.rows.length);
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
        const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,

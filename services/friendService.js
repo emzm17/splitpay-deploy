@@ -66,7 +66,7 @@ const getAllFriends = async (userId) => {
   } else {
     try {
       const friends = await db.query('SELECT * FROM users WHERE user_id =$1', [userId]);
-      console.log(friends.rows[0]);
+      // console.log(friends.rows[0]);
       let friendlist=[]
       for(let i=0;i<friends.rows[0].friend_list.length;i++){
          const friendID=friends.rows[0].friend_list[i];
