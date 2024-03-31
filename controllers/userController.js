@@ -37,7 +37,9 @@ const signin = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
     const existingCurrUser = existingUser.rows[0]
-    const updateUserFriend = await userService.updateFriendlist(([existingCurrUser.user_id]),existingCurrUser.user_id);
+    if(existingCurrUser.friend_list==null){
+      const updateUserFriend = await userService.updateFriendlist(([existingCurrUser.user_id]),existingCurrUser.user_id);
+    }
     bcryptjs.compare(password, existingCurrUser.password, (err, result) => {
       if (err) {
         return res.status(500).json({ message: 'Internal Server Error' });
