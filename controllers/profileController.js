@@ -18,12 +18,6 @@ const updateInfo = async (req, res) => {
 
     // Update user information
     const result = await userService.updateUser(id, name, email, hashedPassword);
-
-    // if (result[0].affectedRows > 0) {
-    //   res.status(201).json({ message: 'User data updated' });
-    // } else {
-    //   res.status(404).json({ message: 'User not found' });
-    // }
     res.status(201).json({message:"user data updated"});
   } catch (error) {
     console.error(error);
