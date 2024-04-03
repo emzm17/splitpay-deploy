@@ -76,9 +76,13 @@ const allUser=async(req,res)=>{
      let allUser=[];
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
-       if(tempUser.user_id!=req.user_id && userService.isFriend(tempUser.user_id,req.user_id)){
-        const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
-          total_owed:tempUser.total_owed}
+       const currUser=await userService.specificUser(req.user_id)
+       const friend_list=currUser.rows[0].friend_list
+       if(tempUser.user_id!=req.user_id && !friend_list.includes(tempUser.user_id)){
+        const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
+          // friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
+          // total_owed:tempUser.total_owed
+        }
           allUser.push(user);
        }
      
@@ -98,8 +102,21 @@ const specificUser=async(req,res)=>{
       return res.status(201).json({message:"no such user is present"});
     }
     const tempUser=specUser.rows[0];
-    const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
-    total_owed:tempUser.total_owed}
+
+    if(userId==req.user_id){
+      const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
+      friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
+      total_owed:tempUser.total_owed}
+      return res.status(201).json(user);    
+    }
+    else{
+      const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
+        // friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
+        // total_owed:tempUser.total_owed
+      }
+      return res.status(201).json(user);    
+    }
+   
     res.status(201).json(user);    
    }catch(error){
     res.status(500).json({ message: error });

@@ -45,20 +45,7 @@ const updateFriendlist=async(friendlist,userid)=>{
    )
 }
 
-const isFriend=async(friendUser_id,User_id)=>{
-  try {
-    const specUser= await db.query(`select * from users where user_id=$1`, [
-      User_id
-   ]);
 
-   const friendlist=specUser[0].friend_list;
-   if(friendlist.includes(frienduser_id)) return true
-   return false;
-
-   }catch(err){
-    throw new Error('something went wrong')
-   }
-}
 
 module.exports = {
   getUserByEmail,
@@ -66,5 +53,4 @@ module.exports = {
   getAlluser,
   specificUser,
   updateFriendlist,
-  isFriend
 };
