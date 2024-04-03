@@ -76,7 +76,7 @@ const allUser=async(req,res)=>{
      let allUser=[];
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
-       if(tempUser.user_id!=req.user_id){
+       if(tempUser.user_id!=req.user_id && userService.isFriend(tempUser.user_id,req.user_id)){
         const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
           total_owed:tempUser.total_owed}
           allUser.push(user);
