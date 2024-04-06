@@ -10,9 +10,20 @@ const getFriendRequests = async (userId) => {
   } else {
     try {
       const friendRequests = await db.query('SELECT * FROM friendships WHERE user2_id = $1', [userId]);
+      let friend=[]
+      for(let i=0;i<friendRequests.rows.length;i++){
+             const userid=friendRequests.rows[i].user1_id
+             const friendrequest=await db.query('select * from users where user_id=$1',[userid])
+             const User={
+                user_id:friendrequest.rows[0].user_id,
+                email:friendrequest.rows[0].email,
+                name:friendrequest.rows[0].name
+             }
+             friend.push(User)
+      }
 
-      redisClient.set(keyName, JSON.stringify(friendRequests.rows), { EX: 30 });
-      return friendRequests.rows;
+      redisClient.set(keyName, JSON.stringify(friend), { EX: 30 });
+      return friend;
     } catch (error) {
       console.log(error);
       throw new Error('internal server error');
