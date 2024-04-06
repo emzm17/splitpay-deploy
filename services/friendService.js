@@ -32,9 +32,6 @@ const acceptFriendRequest = async (userId, friendId) => {
     friendlist.push(parseInt(friendId));
     friendlist1.push(parseInt(userId));
 
-    
-    // console.log(friendlist)
-    // console.log(friendlist1)
 
     await db.query('UPDATE users SET friend_list = $1 WHERE user_id = $2', [
       JSON.stringify(friendlist),
@@ -101,16 +98,13 @@ const sendFriendRequest = async (userId, friendId) => {
       return { message: 'no user found' };
     }
 
-    const userList = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
+    const userList = await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
 //     console.log(userList.rows[0]);
-    const friendList = userList.rows[0].friend_list;
+    // const friendList = userList.rows[0].friend_list;
 
-    for (let j = 0; j < friendList.length; j++) {
-      if (friendId == parseInt(friendList[j])) {
-        return { message: 'user already in friend list' };
-      }
+    if(userList.rows.length>0){
+       return {message:'already sent friend request'}
     }
-
     await db.query('INSERT INTO friendships (user1_id, user2_id) VALUES ($1, $2)', [
       userId,
       friendId,
