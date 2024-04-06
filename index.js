@@ -15,9 +15,7 @@ const settlementRouter = require("./routes/settlementRouter");
 const friendRouter=require('./routes/friendRouter');
 const profileRouter = require("./routes/profileRouter");
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+
 
  app.use("/users", userRouter);
  app.use("/groups", groupRouter);
@@ -30,5 +28,5 @@ app.get('/', (req, res) => {
 
 
 app.listen(PORT, () => {
-  console.log("server is running at port no 8080");
+  console.log("server is running at port no 8090");
 });

@@ -2,12 +2,6 @@
 const db = require('../database');
 const redisClient=require('../utils/redis');
 const getFriendRequests = async (userId) => {
-  const keyName = 'friendfriends';
-  const cached = await redisClient.get(keyName);
-
-  if (cached) {
-    return JSON.parse(cached);
-  } else {
     try {
       const friendRequests = await db.query('SELECT * FROM friendships WHERE user2_id = $1', [userId]);
       let friend=[]
@@ -21,14 +15,11 @@ const getFriendRequests = async (userId) => {
              }
              friend.push(User)
       }
-
-      redisClient.set(keyName, JSON.stringify(friend), { EX: 30 });
       return friend;
     } catch (error) {
       console.log(error);
       throw new Error('internal server error');
     }
-  }
 };
 
 const acceptFriendRequest = async (userId, friendId) => {
