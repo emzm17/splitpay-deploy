@@ -103,13 +103,21 @@ const sendFriendRequest = async (userId, friendId) => {
       return { message: 'no user found' };
     }
 
+    const currUser = await db.query('SELECT * FROM users WHERE user_id = $1', [userId])
+    const friendList=currUser.rows[0].friend_list
+    for (let j = 0; j < friendList.length; j++) {
+      if (friendId == parseInt(friendList[j])) {
+        return { message: 'user already in friend list' };
+      }
+    }
+
+
     const userList = await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
-//     console.log(userList.rows[0]);
-    // const friendList = userList.rows[0].friend_list;
 
     if(userList.rows.length>0){
        return {message:'already sent friend request'}
     }
+   
     await db.query('INSERT INTO friendships (user1_id, user2_id) VALUES ($1, $2)', [
       userId,
       friendId,

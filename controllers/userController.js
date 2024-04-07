@@ -75,12 +75,9 @@ const allUser=async(req,res)=>{
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
        const currUser=await userService.specificUser(req.user_id)
-       const friend_list=currUser.rows[0].friend_list
-       if(tempUser.user_id!=req.user_id && !friend_list.includes(tempUser.user_id)){
-        const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
+       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
         }
-          allUser.push(user);
-       }
+        allUser.push(user);
      
      }
      res.status(200).json(allUser);
