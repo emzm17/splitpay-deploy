@@ -2,49 +2,53 @@
 const userService = require('../services/userService');
 const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
-const db = require('../database');
+const { loginSchema,signupSchema}=require('../utils/validator');
+const { apiError } = require('../utils/apiError');
+const { apiResponse } = require('../utils/apiResponse');
 
-const signup = async (req, res) => {
-  const { name, email, password } = req.body;
 
+
+const signup = async(req,res) => {
   try {
-    const existingUser = await userService.getUserByEmail(email);
-   
-
-    if (existingUser.rows.length > 1) {
-      return res.status(400).json({ message: 'user already exists' });
+    const result=await signupSchema.validateAsync(req.body)
+    const existingUser = await userService.getUserByEmail(result.email);
+    if (existingUser.rows.length > 0) {
+      throw new apiError(400,"user already exist")
 }
-    const hashedPassword = await bcryptjs.hash(password, 10);
-  
-    const user = await userService.createUser(name, email, hashedPassword);
-    
-
+    const hashedPassword = await bcryptjs.hash(result.password, 10);
+    const user = await userService.createUser(result.name, result.email, hashedPassword);
+    if(!user){
+      throw new apiError(500,"something went wrong while registering the user")
+    } 
     const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
-    res.status(201).json({
-      result: token,
-    });
+
+    return res.status(200).json(
+      new apiResponse(token,"user successfully register")
+    ) 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'something went wrong' });
+      if(error.isJoi===true)error.status = 422
+      else error.status=error.statusCode || 500
+      res.status(error.status).json({
+        message:error.message
+      })
   }
 };
 
 const signin = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const existingUser = await userService.getUserByEmail(email);
-    if (existingUser.rows.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+    const result= await loginSchema.validateAsync(req.body)
+    const existingUser = await userService.getUserByEmail(result.email);
+    if (existingUser.rows.length == 0) {
+      throw new apiError(404,"user not found");
     }
     const existingCurrUser = existingUser.rows[0]
     if(existingCurrUser.friend_list==null){
       const updateUserFriend = await userService.updateFriendlist(([existingCurrUser.user_id]),existingCurrUser.user_id);
     }
   
-    bcryptjs.compare(password, existingCurrUser.password, (err, result) => {
+    bcryptjs.compare(result.password, existingCurrUser.password, (err, result) => {
       if (err) {
-        return res.status(500).json({ message: 'Internal Server Error' });
+        throw new apiError(500,"Internal Server Error")
       } else if (result) {
         const token = jwt.sign(
           {
@@ -53,26 +57,30 @@ const signin = async (req, res) => {
           },
           process.env.SECRET_KEY
         );
-
-        return res.status(201).json({
-          user_id:existingCurrUser.user_id,
-          name: existingCurrUser.name,
+       return res.status(201).json(new apiResponse({user_id:existingCurrUser.user_id,name: existingCurrUser.name,
           email: existingCurrUser.email,
-          result: token,
-        });
+          result: token},"user successfully logged In"))
+
       } else {
-        return res.status(401).json({ message: 'Authentication failed. Incorrect password.' });
+        throw new apiError(401,"authentication failed. Incorrect password")
       }
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Something went wrong' });
+    console.log(error);
+    if(error.isJoi===true)error.status = 422
+    else error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 };
 
 const allUser=async(req,res)=>{
   try{
      const getAlluser=await userService.getAlluser();
+     if(getAlluser.rows.length < 1){
+      return res.status(201).json(new apiResponse([],"all users generated successfully"));  
+     }
      let allUser=[];
      for(let i=0;i<getAlluser.rows.length;i++){
        const tempUser=getAlluser.rows[i];
@@ -80,17 +88,18 @@ const allUser=async(req,res)=>{
        const friend_list=currUser.rows[0].friend_list
        if(tempUser.user_id!=req.user_id && !friend_list.includes(tempUser.user_id)){
         const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
-          // friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
-          // total_owed:tempUser.total_owed
         }
           allUser.push(user);
        }
      
      }
-     res.status(200).json(allUser);
+     res.status(200).json(new apiResponse(allUser,"all users generate successfull"));
   }
   catch(error){
-    res.status(500).json({ message: 'Something went wrong' });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 }
 
@@ -99,7 +108,7 @@ const specificUser=async(req,res)=>{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
     if(specUser.rows.length==0){
-      return res.status(201).json({message:"no such user is present"});
+      return res.status(201).json(new apiResponse([],"required specific user"));   
     }
     const tempUser=specUser.rows[0];
 
@@ -107,19 +116,18 @@ const specificUser=async(req,res)=>{
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
       total_owed:tempUser.total_owed}
-      return res.status(201).json(user);    
+      return res.status(201).json(new apiResponse(user,"required specific user"));   
     }
     else{
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
-        // friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
-        // total_owed:tempUser.total_owed
       }
-      return res.status(201).json(user);    
+      return res.status(201).json(new apiResponse(user,"required specific user"));    
     }
-   
-    res.status(201).json(user);    
    }catch(error){
-    res.status(500).json({ message: error });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
    }
 }
 

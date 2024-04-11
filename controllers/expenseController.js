@@ -7,17 +7,23 @@ const {
   createExpense,
 } = require("../services/expenseService");
 
+
+const { apiError } = require('../utils/apiError');
+const { apiResponse } = require('../utils/apiResponse');
+
 // Handler for fetching all expenses
 const getAllExpense = async (req, res) => {
   try {
     const expenses = await getAllExpenses();
     if (expenses.length < 1) {
-      return res.status(404).json({ message: "No expense found" });
+      return res.status(404).json(new apiResponse([],"no expense found"));
     }
-    return res.status(200).json(expenses);
+    return res.status(200).json(new apiResponse(expenses,"all expense"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 };
 
@@ -27,12 +33,14 @@ const getParticularExpenseHandler = async (req, res) => {
     const id = req.params.id;
     const expenses = await getParticularGroupExpense(id);
     if (expenses.length === 0) {
-      return res.status(404).json({ message: "No expense found" });
+      return res.status(404).json(new apiResponse([],"no expense found"));
     }
-    return res.status(200).json(expenses);
+    return res.status(200).json(new apiResponse(expenses,"get particular expense"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 };
 
