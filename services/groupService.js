@@ -11,9 +11,10 @@ const getAllUserGroups = async (userId) => {
     return JSON.parse(cached);
   } else {
     try {
+     let group=[]
      const groups = await db.query('SELECT * FROM group_s');
       if (groups.rows.length == 0) {
-        return { message: 'no group present' };
+        return {group};
       }
     
       // console.log(groups.rows);
