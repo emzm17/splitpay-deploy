@@ -60,7 +60,7 @@ function minimun_amount(amount){
         try {
             const expenses = await db.query(`select * from expenses where group_id=$1`, [groupId]);
             const group = await db.query(`select * from group_s where id=$1`, [groupId]);
-            const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
+            // const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
             // console.log(expenses);
             // console.log(group);
             if(expenses.rows.length==0){
