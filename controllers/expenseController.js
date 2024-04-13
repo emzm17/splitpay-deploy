@@ -10,6 +10,7 @@ const {
 
 const { apiError } = require('../utils/apiError');
 const { apiResponse } = require('../utils/apiResponse');
+const { expenseSchema } = require("../utils/validator");
 
 // Handler for fetching all expenses
 const getAllExpense = async (req, res) => {
@@ -50,29 +51,35 @@ const particularExpenseController = async (req, res) => {
     const particularExpense = await getParticularExpense(id);
 
     if (!particularExpense) {
-      return res.status(404).json({ message: "No expense found" });
+      return res.status(404).json(new apiResponse([],"no expense found"));
     }
 
-    return res.status(200).json(particularExpense);
+    return res.status(200).json(new apiResponse(particularExpense,"get particular expense"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Something went wrong" });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 };
 
 const createExpenseController = async (req, res) => {
   try {
-    const { amount, description, payer_id, group_id } = req.body;
+    const result=await expenseSchema.validateAsync(req.body)
     const message = await createExpense(
-      amount,
-      description,
-      payer_id,
-      group_id
+      result.amount,
+      result.description,
+      result.payer_id,
+      result.group_id
     );
-    res.status(201).json(message);
+    res.status(201).json(new apiResponse(message,"new expense created"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    if(error)
+    if(error.isJoi===true)error.status = 422
+    else error.status=error.statusCode || 500
+    res.status(error.status).json({
+      message:error.message
+    })
   }
 };
 

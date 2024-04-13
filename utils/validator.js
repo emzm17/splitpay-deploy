@@ -12,9 +12,16 @@ const signupSchema=joi.object({
      password:joi.string().min(8).required()
 })
 
+const expenseSchema=joi.object({
+    amount:joi.number().integer().required(),
+    description:joi.string().required(),
+    payer_id:joi.number().integer().required(),
+    group_id:joi.number().integer().required()
+    
+})
 
 
 
 module.exports={
-    loginSchema,signupSchema
+    loginSchema,signupSchema,expenseSchema
 }
