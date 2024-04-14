@@ -13,7 +13,7 @@ const signup = async(req,res) => {
     const result=await signupSchema.validateAsync(req.body)
     const existingUser = await userService.getUserByEmail(result.email);
     if (existingUser.rows.length > 0) {
-      throw new apiError(400,"user already exist")
+      throw new apiError(404,"user already exist")
 }
     const hashedPassword = await bcryptjs.hash(result.password, 10);
     const user = await userService.createUser(result.name, result.email, hashedPassword);
@@ -22,13 +22,15 @@ const signup = async(req,res) => {
     } 
     const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
 
-    return res.status(200).json(
-      new apiResponse(token,"user successfully register")
+    return res.status(201).json(
+      new apiResponse("success",token,"user successfully register")
     ) 
   } catch (error) {
       if(error.isJoi===true)error.status = 422
       else error.status=error.statusCode || 500
       res.status(error.status).json({
+        status:"error",
+        data:null,
         message:error.message
       })
   }
@@ -36,50 +38,61 @@ const signup = async(req,res) => {
 
 const signin = async (req, res) => {
   try {
-    const result= await loginSchema.validateAsync(req.body)
+    const result = await loginSchema.validateAsync(req.body);
     const existingUser = await userService.getUserByEmail(result.email);
-    if (existingUser.rows.length == 0) {
-      throw new apiError(404,"user not found");
-    }
-    const existingCurrUser = existingUser.rows[0]
-    if(existingCurrUser.friend_list==null){
-      const updateUserFriend = await userService.updateFriendlist(([existingCurrUser.user_id]),existingCurrUser.user_id);
-    }
-  
-    bcryptjs.compare(result.password, existingCurrUser.password, (err, result) => {
-      if (err) {
-        throw new apiError(500,"Internal Server Error")
-      } else if (result) {
-        const token = jwt.sign(
-          {
-            email: existingCurrUser.email,
-            id: existingCurrUser.user_id,
-          },
-          process.env.SECRET_KEY
-        );
-       return res.status(201).json(new apiResponse({user_id:existingCurrUser.user_id,name: existingCurrUser.name,
-          email: existingCurrUser.email,
-          result: token},"user successfully logged In"))
 
-      } else {
-        throw new apiError(401,"authentication failed. Incorrect password")
-      }
-    });
+    if (existingUser.rows.length === 0) {
+      throw new apiError(404, "User not found");
+    }
+
+    const existingCurrUser = existingUser.rows[0];
+
+    if (existingCurrUser.friend_list === null) {
+      await userService.updateFriendlist([existingCurrUser.user_id], existingCurrUser.user_id);
+    }
+
+    const passwordMatch = await userService.comparePasswords(result.password, existingCurrUser.password);
+
+    if (passwordMatch) {
+      const token = jwt.sign(
+        {
+          email: existingCurrUser.email,
+          id: existingCurrUser.user_id,
+        },
+        process.env.SECRET_KEY
+      );
+      res.status(200).json(new apiResponse("success", {
+        user_id: existingCurrUser.user_id,
+        name: existingCurrUser.name,
+        email: existingCurrUser.email,
+        token: token,
+      }, "User successfully logged in"));
+    } else {
+      throw new apiError(401, "Authentication failed. Incorrect password");
+    }
   } catch (error) {
-    console.log(error);
-    if(error.isJoi===true)error.status = 422
-    else error.status=error.statusCode || 500
+    console.error(error);
+    if (error.isJoi === true) {
+      error.status = 422;
+    } else {
+      error.status = error.statusCode || 500;
+    }
     res.status(error.status).json({
-      message:error.message
-    })
+      status: "error",
+      data: null,
+      message: error.message,
+    });
   }
 };
+
+
+
 
 const allUser=async(req,res)=>{
   try{
      const getAlluser=await userService.getAlluser();
      if(getAlluser.rows.length < 1){
-      return res.status(201).json(new apiResponse([],"all users generated successfully"));  
+      return res.status(201).json(new apiResponse("success",null,"all users generated successfully"));  
      }
      let allUser=[];
      for(let i=0;i<getAlluser.rows.length;i++){
@@ -93,11 +106,13 @@ const allUser=async(req,res)=>{
        }
      
      }
-     res.status(200).json(new apiResponse(allUser,"all users generate successfull"));
+     res.status(200).json(new apiResponse("success",allUser,"all users generate successfully"));
   }
   catch(error){
     error.status=error.statusCode || 500
     res.status(error.status).json({
+      status: "error",
+      data: null,
       message:error.message
     })
   }
@@ -108,7 +123,7 @@ const specificUser=async(req,res)=>{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
     if(specUser.rows.length==0){
-      return res.status(201).json(new apiResponse([],"required specific user"));   
+        throw new apiError(404,"user not found")
     }
     const tempUser=specUser.rows[0];
 
@@ -116,16 +131,18 @@ const specificUser=async(req,res)=>{
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
       total_owed:tempUser.total_owed}
-      return res.status(201).json(new apiResponse(user,"required specific user"));   
+      return res.status(201).json(new apiResponse("success",user,"your specific user"));   
     }
     else{
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       }
-      return res.status(201).json(new apiResponse(user,"required specific user"));    
+      return res.status(201).json(new apiResponse("success",user,"your specific user"));    
     }
    }catch(error){
     error.status=error.statusCode || 500
     res.status(error.status).json({
+      status: "error",
+      data: null,
       message:error.message
     })
    }

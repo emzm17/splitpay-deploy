@@ -45,6 +45,17 @@ const updateFriendlist=async(friendlist,userid)=>{
    )
 }
 
+async function comparePasswords(password, hashedPassword) {
+  return new Promise((resolve, reject) => {
+    bcryptjs.compare(password, hashedPassword, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
 
 
 module.exports = {
@@ -53,4 +64,5 @@ module.exports = {
   getAlluser,
   specificUser,
   updateFriendlist,
+  comparePasswords
 };

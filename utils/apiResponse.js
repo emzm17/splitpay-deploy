@@ -1,7 +1,9 @@
 class apiResponse {
-    constructor (data,message="Success"){
+    constructor (status,data,message="Success"){
         this.data=data
         this.message=message
+        this.status=status
+
     }
 }
 
