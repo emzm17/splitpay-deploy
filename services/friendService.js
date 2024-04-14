@@ -1,6 +1,6 @@
 // services/friendService.js
 const db = require('../database');
-const redisClient=require('../utils/redis');
+
 const getFriendRequests = async (userId) => {
     try {
       const friendRequests = await db.query('SELECT * FROM friendships WHERE user2_id = $1', [userId]);
@@ -57,12 +57,6 @@ const acceptFriendRequest = async (userId, friendId) => {
 };
 
 const getAllFriends = async (userId) => {
-  const keyName = 'allfriends';
-  const cached = await redisClient.get(keyName);
-
-  if (cached) {
-    return JSON.parse(cached);
-  } else {
     try {
       const friends = await db.query('SELECT * FROM users WHERE user_id =$1', [userId]);
       let friendlist=[]
@@ -82,31 +76,24 @@ const getAllFriends = async (userId) => {
        
         
       }
-
-      redisClient.set(keyName, JSON.stringify(friendlist), { EX: 30 });
       return friendlist;
     } catch (error) {
       console.log(error);
       throw new Error('internal server error');
     }
-  }
 };
+
+const checkUser= async(friendId)=>{
+ return await db.query('SELECT * FROM users WHERE user_id = $1', [friendId]);
+}
+
+
+const checkRequest=async(userId,friendId)=>{
+  return await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
+}
 
 const sendFriendRequest = async (userId, friendId) => {
   try {
-    const checkUser = await db.query('SELECT * FROM users WHERE user_id = $1', [friendId]);
-
-    if (checkUser.rows.length == 0) {
-      return { message: 'no user found' };
-    }
-
-    const userList = await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
-//     console.log(userList.rows[0]);
-    // const friendList = userList.rows[0].friend_list;
-
-    if(userList.rows.length>0){
-       return {message:'already sent friend request'}
-    }
     await db.query('INSERT INTO friendships (user1_id, user2_id) VALUES ($1, $2)', [
       userId,
       friendId,
@@ -114,7 +101,6 @@ const sendFriendRequest = async (userId, friendId) => {
 
     return { message: 'friend request sent successfully' };
   } catch (error) {
-    console.log(error);
     throw new Error('internal server error');
   }
 };
@@ -130,5 +116,7 @@ module.exports = {
   acceptFriendRequest,
   getAllFriends,
   sendFriendRequest,
-  friendUpdate
+  friendUpdate,
+  checkUser,
+  checkRequest
 };

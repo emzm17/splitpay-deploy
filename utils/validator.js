@@ -20,8 +20,13 @@ const expenseSchema=joi.object({
     
 })
 
+const groupSchema=joi.object({
+    name:joi.string().required(),
+    users_id:joi.array().required(),
+    created_by:joi.number().integer().required()
+})
 
 
 module.exports={
-    loginSchema,signupSchema,expenseSchema
+    loginSchema,signupSchema,expenseSchema,groupSchema
 }

@@ -17,12 +17,13 @@ const getAllExpense = async (req, res) => {
   try {
     const expenses = await getAllExpenses();
     if (expenses.length < 1) {
-      return res.status(404).json(new apiResponse([],"no expense found"));
+       throw new apiError(404,"no expense found")
     }
-    return res.status(200).json(new apiResponse(expenses,"all expense"));
+    return res.status(200).json(new apiResponse("success",expenses,"all expense"));
   } catch (error) {
-    error.status=error.statusCode || 500
     res.status(error.status).json({
+      status: "error",
+      data: null,
       message:error.message
     })
   }
@@ -33,13 +34,15 @@ const getParticularExpenseHandler = async (req, res) => {
   try {
     const id = req.params.id;
     const expenses = await getParticularGroupExpense(id);
-    if (expenses.length === 0) {
-      return res.status(404).json(new apiResponse([],"no expense found"));
+    if (expenses.length < 1) {
+      throw new apiError(404,"no expense found")
     }
-    return res.status(200).json(new apiResponse(expenses,"get particular expense"));
+    return res.status(200).json(new apiResponse("success",expenses,"get particular group expense"));
   } catch (error) {
     error.status=error.statusCode || 500
     res.status(error.status).json({
+      status: "error",
+      data: null,
       message:error.message
     })
   }
@@ -51,13 +54,14 @@ const particularExpenseController = async (req, res) => {
     const particularExpense = await getParticularExpense(id);
 
     if (!particularExpense) {
-      return res.status(404).json(new apiResponse([],"no expense found"));
+      throw new apiError(404,"no expense found")
     }
 
-    return res.status(200).json(new apiResponse(particularExpense,"get particular expense"));
+    return res.status(200).json(new apiResponse("success",particularExpense,"get particular expense"));
   } catch (error) {
-    error.status=error.statusCode || 500
-    res.status(error.status).json({
+    res.status(error.statusCode).json({
+      status: "error",
+      data: null,
       message:error.message
     })
   }
@@ -72,12 +76,13 @@ const createExpenseController = async (req, res) => {
       result.payer_id,
       result.group_id
     );
-    res.status(201).json(new apiResponse(message,"new expense created"));
+    res.status(201).json(new apiResponse("success",message,"new expense created"));
   } catch (error) {
-    if(error)
     if(error.isJoi===true)error.status = 422
     else error.status=error.statusCode || 500
     res.status(error.status).json({
+      status: "error",
+      data: null,
       message:error.message
     })
   }

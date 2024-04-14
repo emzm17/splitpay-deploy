@@ -1,27 +1,33 @@
 // controllers/profileController.js
 const userService = require('../services/profileService');
 const bcryptjs = require('bcryptjs');
+const {apiError}=require('../utils/apiError')
+const {apiResponse}=require('../utils/apiResponse')
+const { signupSchema } = require('../utils/validator');
+
 
 const updateInfo = async (req, res) => {
-  const { name, email, password } = req.body;
-  const id = req.user_id;
-
   try {
-    const hashedPassword = await bcryptjs.hash(password, 10);
-
-    // Check if the new email already exists
-    const emailList = await userService.getUserByEmail(email);
+    const result= await signupSchema.validateAsync(req.body)
+    const id = req.user_id;
+    const hashedPassword = await bcryptjs.hash(result.password, 10);
+    const emailList = await userService.getUserByEmail(result.email);
 
     if (emailList.rows.length > 0) {
-      return res.status(400).json({ message: 'This email already exists. Please choose another one.' });
+      throw new apiError(404,"already email exists")
     }
 
     // Update user information
-    const result = await userService.updateUser(id, name, email, hashedPassword);
-    res.status(201).json({message:"user data updated"});
+    const data=await userService.updateUser(id, result.name, result.email, hashedPassword);
+    res.status(202).json(new apiResponse("success",data,"profile updated"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Something went wrong' });
+    if(error.isJoi===true)error.status = 422
+    else error.status=error.statusCode || 500
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 

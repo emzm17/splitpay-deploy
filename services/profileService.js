@@ -7,7 +7,10 @@ const getUserByEmail = async (email) => {
 };
 
 const updateUser = async (id, name, email, hashedPassword) => {
-  return db.query('UPDATE users SET name = $1, email = $2, password = $3 WHERE user_id = $4', [name, email, hashedPassword, id]);
+  const profileupdate=db.query('UPDATE users SET name = $1, email = $2, password = $3 WHERE user_id = $4', [name, email, hashedPassword, id]);
+  return {
+    message:"profile updated"
+  }
 };
 
 module.exports = {

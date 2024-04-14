@@ -91,7 +91,7 @@ const getParticularExpense = async (id) => {
       );
 
       if (expense.rows.length == 0) {
-        return null;
+        return null
       }
 
       const particularExpense = expense.rows[0];

@@ -12,11 +12,6 @@ const getAllUserGroups = async (userId) => {
   } else {
     try {
      const groups = await db.query('SELECT * FROM group_s');
-      if (groups.rows.length == 0) {
-        return { message: 'no group present' };
-      }
-    
-      // console.log(groups.rows);
       const allgroups=[];
       for(let i=0;i<groups.rows.length;i++){
          const currgroup=groups.rows[i];
@@ -28,7 +23,7 @@ const getAllUserGroups = async (userId) => {
             }
       }
       redisClient.set(keyName, JSON.stringify(allgroups), { EX: 30 });
-      return allgroups
+      return allgroups.rows
     } catch (error) {
       throw new Error('something went wrong');
     }
@@ -49,27 +44,25 @@ const createGroup = async (name, usersId, createdBy) => {
   };
 
   const getAllgroups= async()=> {
+  const keyName = 'getAllGroups';
+  const cached = await redisClient.get(keyName);
+  if (cached) {
+    return JSON.parse(cached);
+  } else {
       try{
          const groups= await db.query('SELECT * FROM group_s');
-        //  console.log(groups[0]);
-         if(groups.rows.length == 0)
-         return {message:"no group present"}
+         redisClient.set(keyName, JSON.stringify(groups.rows), { EX: 30 });
          return groups.rows;
-        
       }catch(error){
          throw new Error('Something went wrong');
       }
   }
+}
 
   const getparticulargroup=async(id)=>{
     try{
         const groups= await db.query('SELECT * FROM group_s where id=$1',[id]);
-        //  console.log(groups[0]);
-         if(groups.rows.length == 0)
-         return {message:"no group present"}
-         
-         return groups.rows;
-        
+        return groups.rows;
     }
     catch(error){
         throw new Error('Something went wrong');
