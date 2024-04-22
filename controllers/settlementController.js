@@ -1,13 +1,18 @@
 const settlementService = require('../services/settlementService');
+const { apiResponse } = require('../utils/apiResponse');
 
 const settlement = async (req, res) => {
   const groupId = req.params.id;
   try {
-    console.log(groupId);
     const result = await settlementService.settlement(groupId);
-    res.status(200).json(result);
+    res.status(200).json(new apiResponse("success",result,"successfully generated"));
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Internal Server Error' });
+    error.status=error.statusCode
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 

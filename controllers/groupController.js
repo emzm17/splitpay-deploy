@@ -5,13 +5,14 @@ const { apiResponse } = require('../utils/apiResponse');
 const { groupSchema } = require('../utils/validator');
 
 const groupCreate = async (req, res) => {
-  const { name, users_id} = req.body;
+  const { name, users} = req.body;
   // const created_by=req.user_id
 
-  const request={name:name,users_id:users_id,created_by:req.user_id}
+  const request={name:name,users:users}
   const result=await groupSchema.validateAsync(request)
   try {
-    const message=await groupService.createGroup(result.name, result.users_id, result.created_by);
+    const message=await groupService.createGroup(result.name, result.users,req.user_id);
+  
     res.status(201).json(new apiResponse("success",message,"new group created Successfully"));
   } catch (error) {
     if(error.isJoi===true)error.status = 422
@@ -30,9 +31,10 @@ const getallusergroup = async (req, res) => {
     if(groups.length == 0){
       throw new apiError(404,"no group found");
     }
-    res.status(200).json(new apiResponse("success",groups,"all groups"));
+   
+    res.status(200).json(new apiResponse("success",groups,"current users groups"));
   } catch (error) {
-    error.status=error.statusCode || 500
+    error.status=error.statusCode || 600
     res.status(error.status).json({
       status: "error",
       data: null,

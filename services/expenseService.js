@@ -18,7 +18,7 @@ const getParticularGroupExpense = async (id) => {
 };
 
 // create expense
-const createExpense = async (amount, description, payer_id, group_id) => {
+const createExpense = async (amount,description,payer,group_id) => {
   try {
     const groupQuery = `SELECT * FROM group_s WHERE id = $1`;
     const groupResult = await db.query(groupQuery, [group_id]);
@@ -26,14 +26,15 @@ const createExpense = async (amount, description, payer_id, group_id) => {
     if (groupResult.rows.length == 0) {
       throw new Error("No group present");
     }
+    // console.log(amount,description,payer,group_id);
     const newExpenseQuery = `
-      INSERT INTO expenses (amount, description, payer_id, group_id)
+      INSERT INTO expenses (amount, description,payer,group_id)
       VALUES ($1, $2, $3, $4)
     `;
-    await db.query(newExpenseQuery, [amount, description, payer_id, group_id]);
-
+    await db.query(newExpenseQuery, [amount, description,JSON.stringify(payer),group_id]);
+    const payerUser=JSON.stringify(payer);
     // for (let i = 0; i < groupResult.rows.length; i++) {
-      const currgroup = groupResult.rows[0].users_id;
+      const currgroup = groupResult.rows[0].users;
       let sz = currgroup.length;
 
       // console.log(sz);
@@ -42,29 +43,31 @@ const createExpense = async (amount, description, payer_id, group_id) => {
       // console.log(eachContributeRound);
       const totalAmount = amount - eachContributeRound;
       const currentUserAmount = await db.query(
-        `SELECT total_amount from users where user_id =$1`,
-        [payer_id]
+        `SELECT * from users where user_id =$1`,
+        [payer[0].user_id]
       );
+      
 
       const totalAmountUser = parseInt(currentUserAmount.rows[0].total_amount) + amount;
-      // console.log(currentUserAmount.rows[0].total_amount );
+      const totalOwedUser=parseInt(currentUserAmount.rows[0].total_owed) + totalAmount;
+      // console.log(currentUserAmount.rows[0].total_amount,currentUserAmount.rows[0].total_owed);
 
       const updateUserAmount = await db.query(
         "UPDATE users set total_amount=$1,total_owed=$2 where user_id=$3",
-        [totalAmountUser, totalAmount, payer_id]
+        [totalAmountUser, totalOwedUser, payer[0].user_id]
       );
 
       for (let j = 0; j < currgroup.length; j++) {
-        if (payer_id != currgroup[j]) {
+        if (payer[0].user_id != currgroup[j].user_id) {
           const currentUserOweAmount = await db.query(
             `SELECT * from users where user_id =$1`,
-            [currgroup[j]]
+            [currgroup[j].user_id]
           );
           const owe=parseInt(currentUserOweAmount.rows[0].total_owe)+parseInt(eachContributeRound)
           // console.log(typeof owe);
           const youOwe = await db.query(
             `UPDATE users set total_owe=$1 where user_id=$2`,
-            [owe,currgroup[j]]
+            [owe,currgroup[j].user_id]
           );
         }
     }

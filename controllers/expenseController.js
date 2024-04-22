@@ -69,11 +69,13 @@ const particularExpenseController = async (req, res) => {
 
 const createExpenseController = async (req, res) => {
   try {
-    const result=await expenseSchema.validateAsync(req.body)
+    const { amount, description, payer, group_id } = req.body;
+    const requestBody={amount:amount,description:description,payer:payer,group_id:group_id}
+    const result=await expenseSchema.validateAsync(requestBody)
     const message = await createExpense(
       result.amount,
       result.description,
-      result.payer_id,
+      result.payer,
       result.group_id
     );
     res.status(201).json(new apiResponse("success",message,"new expense created"));

@@ -1,5 +1,7 @@
 // services/friendService.js
 const db = require('../database');
+const redisClient=require('../utils/redis');
+
 
 const getFriendRequests = async (userId) => {
     try {
@@ -57,6 +59,11 @@ const acceptFriendRequest = async (userId, friendId) => {
 };
 
 const getAllFriends = async (userId) => {
+  const keyName = 'getallfriends'+userId;
+  const cached = await redisClient.get(keyName);
+  if (cached) {
+    return JSON.parse(cached);
+  } else {
     try {
       const friends = await db.query('SELECT * FROM users WHERE user_id =$1', [userId]);
       let friendlist=[]
@@ -76,11 +83,13 @@ const getAllFriends = async (userId) => {
        
         
       }
+      redisClient.set(keyName, JSON.stringify(friendlist), { EX: 30 });
       return friendlist;
     } catch (error) {
       console.log(error);
       throw new Error('internal server error');
     }
+  }
 };
 
 const checkUser= async(friendId)=>{

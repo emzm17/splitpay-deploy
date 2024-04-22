@@ -60,7 +60,7 @@ function minimun_amount(amount){
         try {
             const expenses = await db.query(`select * from expenses where group_id=$1`, [groupId]);
             const group = await db.query(`select * from group_s where id=$1`, [groupId]);
-            // const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
+            const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
             // console.log(expenses);
             // console.log(group);
             if(expenses.rows.length==0){
@@ -131,9 +131,9 @@ function minimun_amount(amount){
                     `select total_owed from users where user_id=$1`,[payee]
                   );
                   let updatetotalAmountRecord=parseFloat(updatetotalAmount.rows[0].total_owed)-logEntries[i].amount;
-                  // if(updatetotalAmountRecord<0){
-                  //   updatetotalAmountRecord=0;
-                  // }
+                  if(updatetotalAmountRecord<0){
+                    updatetotalAmountRecord=0;
+                  }
                   const updatedtotalAmount=await db.query(
                         `update users set total_owed=$1 where user_id=$2`,[updatetotalAmountRecord,payee]
                   );

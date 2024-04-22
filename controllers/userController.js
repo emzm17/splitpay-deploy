@@ -41,7 +41,7 @@ const signin = async (req, res) => {
     const result = await loginSchema.validateAsync(req.body);
     const existingUser = await userService.getUserByEmail(result.email);
 
-    if (existingUser.rows.length === 0) {
+    if (existingUser.rows.length == 0) {
       throw new apiError(404, "User not found");
     }
 
