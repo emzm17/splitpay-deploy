@@ -47,9 +47,9 @@ const signin = async (req, res) => {
 
     const existingCurrUser = existingUser.rows[0];
 
-    if (existingCurrUser.friend_list === null) {
-      await userService.updateFriendlist([existingCurrUser.user_id], existingCurrUser.user_id);
-    }
+    // if (existingCurrUser.friend_list === null) {
+    //   await userService.updateFriendlist([existingCurrUser.user_id], existingCurrUser.user_id);
+    // }
 
     const passwordMatch = await userService.comparePasswords(result.password, existingCurrUser.password);
 

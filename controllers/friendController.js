@@ -28,7 +28,7 @@ const acceptFriendRequest = async (req, res) => {
     const result = await friendService.acceptFriendRequest(userId, confriendId);
     res.status(201).json(new apiResponse("success",result,"friend request accepted"));
   } catch (error) {
-    error.status=error.statusCode
+    error.status=error.statusCode || 500
     res.status(error.status).json({
       status: "error",
       data: null,
@@ -64,14 +64,14 @@ const sendFriendRequest = async (req, res) => {
       throw new apiError(404,"user not found")
     }
     const checkrequest=await friendService.checkRequest(userId,friendId)
-    console.log(checkrequest.rows.length);
     if(checkrequest.rows.length !=0){
        throw new apiError(404,"already sent friend request");
     }
     const result=await friendService.sendFriendRequest(userId,friendId);
     res.status(201).json(new apiResponse("success",result,"send friend request"));
   } catch (error) {
-    error.status=error.statusCode
+    if(error.isJoi===true)error.status = 422
+    else error.status=error.statusCode || 500
     res.status(error.status).json({
       status: "error",
       data: null,
