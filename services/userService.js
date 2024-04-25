@@ -30,10 +30,26 @@ const specificUser=async(userId)=>{
   }
 }
 
-const getAlluser=async=>{
+const getAlluser=async(userId)=>{
    try{
-    const allUser=db.query('select * from users')
-    return allUser
+    const allUser=await db.query('select * from users')
+    const specificUser=await db.query(`select * from users where user_id=$1`, [
+      userId
+   ]);
+   const users=[]
+   let friendMap={}
+   for(let i=0;i<specificUser.rows[0].friend_list.length;i++){
+           const friendUser=specificUser.rows[0].friend_list[i]
+           friendMap[friendUser.email]=true
+   }
+   console.log(friendMap);
+   for(let i=0;i<allUser.rows.length;i++){
+         const user=allUser.rows[i]
+         if(!friendMap.hasOwnProperty(user.email) && user.user_id!=userId){
+           users.push(user)
+         }
+   }
+    return users
    }catch(error){
      throw new Error('something went wrong')
    }

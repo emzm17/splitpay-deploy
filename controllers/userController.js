@@ -90,23 +90,20 @@ const signin = async (req, res) => {
 
 const allUser=async(req,res)=>{
   try{
-     const getAlluser=await userService.getAlluser();
-     if(getAlluser.rows.length < 1){
+     const getAlluser=await userService.getAlluser(req.user_id);
+     if(getAlluser.length < 1){
       return res.status(201).json(new apiResponse("success",null,"all users generated successfully"));  
      }
-     let allUser=[];
-     for(let i=0;i<getAlluser.rows.length;i++){
-       const tempUser=getAlluser.rows[i];
-       const currUser=await userService.specificUser(req.user_id)
-       const friend_list=currUser.rows[0].friend_list
-       if(tempUser.user_id!=req.user_id && !friend_list.includes(tempUser.user_id)){
-        const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
-        }
-          allUser.push(user);
-       }
-     
+     const users=[]
+     for(let i=0;i<getAlluser.length;i++){
+      const user={
+        user_id:getAlluser[i].user_id,
+        name:getAlluser[i].name,
+        email:getAlluser[i].email
+      }
+      users.push(user);
      }
-     res.status(200).json(new apiResponse("success",allUser,"all users generate successfully"));
+     res.status(200).json(new apiResponse("success",users,"all users generate successfully"));
   }
   catch(error){
     error.status=error.statusCode || 500

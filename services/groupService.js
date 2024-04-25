@@ -15,7 +15,6 @@ const getAllUserGroups = async (userId) => {
       for(let i=0;i<groups.rows.length;i++){
          const currgroup=groups.rows[i];
             for(let j=0;j<currgroup.users.length;j++){
-              // console.log(currgroup.users[j])
                if(currgroup.users[j].user_id==userId){
                 allgroups.push(currgroup);
                 break;
