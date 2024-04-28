@@ -1,4 +1,4 @@
-const db=require('../database');
+const db=require('../utils/database');
 const  graph=require('../utils/graph');
 
 
@@ -60,8 +60,10 @@ function minimun_amount(amount){
         try {
             const expenses = await db.query(`select * from expenses where group_id=$1`, [groupId]);
             const group = await db.query(`select * from group_s where id=$1`, [groupId]);
-            // const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
+
+            const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
             // console.log(expenses.rows);
+
             // console.log(group);
             if(expenses.rows.length==0){
                 return {message:"all settlement is complete"}

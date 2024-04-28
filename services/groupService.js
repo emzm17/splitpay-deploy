@@ -1,5 +1,5 @@
 // services/groupService.js
-const db = require('../database');
+const db = require('../utils/database');
 const redisClient=require('../utils/redis');
 redisClient.connect()
 
@@ -10,6 +10,7 @@ const getAllUserGroups = async (userId) => {
     return JSON.parse(cached);
   } else {
     try {
+     let group=[]
      const groups = await db.query('SELECT * FROM group_s');
       const allgroups=[];
       for(let i=0;i<groups.rows.length;i++){

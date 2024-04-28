@@ -8,6 +8,7 @@ const { apiResponse } = require('../utils/apiResponse');
 
 
 
+
 const signup = async(req,res) => {
   try {
     const result=await signupSchema.validateAsync(req.body)
@@ -21,6 +22,7 @@ const signup = async(req,res) => {
       throw new apiError(500,"something went wrong while registering the user")
     } 
     const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
+
 
     return res.status(201).json(
       new apiResponse("success",token,"user successfully register")
@@ -123,7 +125,6 @@ const specificUser=async(req,res)=>{
         throw new apiError(404,"user not found")
     }
     const tempUser=specUser.rows[0];
-
     if(userId==req.user_id){
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
@@ -144,11 +145,6 @@ const specificUser=async(req,res)=>{
     })
    }
 }
-
-
-
-
-
 
 module.exports = {
   signup,

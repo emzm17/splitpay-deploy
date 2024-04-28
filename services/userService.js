@@ -1,5 +1,5 @@
 // services/userService.js
-const db = require('../database');
+const db = require('../utils/database');
 const bcryptjs = require('bcryptjs');
 
 const getUserByEmail = async (email) => {
@@ -64,6 +64,7 @@ const updateFriendlist=async(friendlist,userid)=>{
     'update users set friend_list=$1 where user_id=$2',[JSON.stringify(friendlist),userid]
    )
 }
+
 
 async function comparePasswords(password, hashedPassword) {
   return new Promise((resolve, reject) => {
