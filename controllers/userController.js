@@ -2,88 +2,118 @@
 const userService = require('../services/userService');
 const jwt = require('jsonwebtoken');
 const bcryptjs = require('bcryptjs');
+const { loginSchema,signupSchema}=require('../utils/validator');
+const { apiError } = require('../utils/apiError');
+const { apiResponse } = require('../utils/apiResponse');
 
-const signup = async (req, res) => {
-  const { name, email, password } = req.body;
 
+
+
+const signup = async(req,res) => {
   try {
-    const existingUser = await userService.getUserByEmail(email);
-   
-
-    if (existingUser.rows.length > 1) {
-      return res.status(400).json({ message: 'user already exists' });
+    const result=await signupSchema.validateAsync(req.body)
+    const existingUser = await userService.getUserByEmail(result.email);
+    if (existingUser.rows.length > 0) {
+      throw new apiError(404,"user already exist")
 }
-    const hashedPassword = await bcryptjs.hash(password, 10);
-  
-    const user = await userService.createUser(name, email, hashedPassword);
-    
-
+    const hashedPassword = await bcryptjs.hash(result.password, 10);
+    const user = await userService.createUser(result.name, result.email, hashedPassword);
+    if(!user){
+      throw new apiError(500,"something went wrong while registering the user")
+    } 
     const token = jwt.sign({ email: user.email, id: user.user_id }, process.env.SECRET_KEY);
-    res.status(201).json({
-      result: token,
-    });
+
+
+    return res.status(201).json(
+      new apiResponse("success",token,"user successfully register")
+    ) 
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: 'something went wrong' });
+      if(error.isJoi===true)error.status = 422
+      else error.status=error.statusCode || 500
+      res.status(error.status).json({
+        status:"error",
+        data:null,
+        message:error.message
+      })
   }
 };
 
 const signin = async (req, res) => {
-  const { email, password } = req.body;
-
   try {
-    const existingUser = await userService.getUserByEmail(email);
-    if (existingUser.rows.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const existingCurrUser = existingUser.rows[0]
-    if(existingCurrUser.friend_list==null){
-      const updateUserFriend = await userService.updateFriendlist(([existingCurrUser.user_id]),existingCurrUser.user_id);
-    }
-    bcryptjs.compare(password, existingCurrUser.password, (err, result) => {
-      if (err) {
-        return res.status(500).json({ message: 'Internal Server Error' });
-      } else if (result) {
-        const token = jwt.sign(
-          {
-            email: existingCurrUser.email,
-            id: existingCurrUser.user_id,
-          },
-          process.env.SECRET_KEY
-        );
+    const result = await loginSchema.validateAsync(req.body);
+    const existingUser = await userService.getUserByEmail(result.email);
 
-        return res.status(201).json({
-          user_id:existingCurrUser.user_id,
-          name: existingCurrUser.name,
-          email: existingCurrUser.email,  
-          result: token,
-        });
-      } else {
-        return res.status(401).json({ message: 'Authentication failed. Incorrect password.' });
-      }
-    });
+    if (existingUser.rows.length == 0) {
+      throw new apiError(404, "User not found");
+    }
+
+    const existingCurrUser = existingUser.rows[0];
+
+    // if (existingCurrUser.friend_list === null) {
+    //   await userService.updateFriendlist([existingCurrUser.user_id], existingCurrUser.user_id);
+    // }
+
+    const passwordMatch = await userService.comparePasswords(result.password, existingCurrUser.password);
+
+    if (passwordMatch) {
+      const token = jwt.sign(
+        {
+          email: existingCurrUser.email,
+          id: existingCurrUser.user_id,
+        },
+        process.env.SECRET_KEY
+      );
+      res.status(200).json(new apiResponse("success", {
+        user_id: existingCurrUser.user_id,
+        name: existingCurrUser.name,
+        email: existingCurrUser.email,
+        token: token,
+      }, "User successfully logged in"));
+    } else {
+      throw new apiError(401, "Authentication failed. Incorrect password");
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Something went wrong' });
+    if (error.isJoi === true) {
+      error.status = 422;
+    } else {
+      error.status = error.statusCode || 500;
+    }
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message: error.message,
+    });
   }
 };
 
+
+
+
 const allUser=async(req,res)=>{
   try{
-     const getAlluser=await userService.getAlluser();
-     let allUser=[];
-     for(let i=0;i<getAlluser.rows.length;i++){
-       const tempUser=getAlluser.rows[i];
-       const currUser=await userService.specificUser(req.user_id)
-       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email
-        }
-        allUser.push(user);
-     
+     const getAlluser=await userService.getAlluser(req.user_id);
+     if(getAlluser.length < 1){
+      return res.status(201).json(new apiResponse("success",null,"all users generated successfully"));  
      }
-     res.status(200).json(allUser);
+     const users=[]
+     for(let i=0;i<getAlluser.length;i++){
+      const user={
+        user_id:getAlluser[i].user_id,
+        name:getAlluser[i].name,
+        email:getAlluser[i].email
+      }
+      users.push(user);
+     }
+     res.status(200).json(new apiResponse("success",users,"all users generate successfully"));
   }
   catch(error){
-    res.status(500).json({ message: 'Something went wrong' });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 }
 
@@ -92,33 +122,34 @@ const specificUser=async(req,res)=>{
     const userId=req.params.userId
     const specUser=await userService.specificUser(userId);
     if(specUser.rows.length==0){
-      return res.status(201).json({message:"no such user is present"});
+        throw new apiError(404,"user not found")
     }
     const tempUser=specUser.rows[0];
     if(userId==req.user_id){
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       friend_list:tempUser.friend_list,total_amount:tempUser.total_amount,total_owe:tempUser.total_owe,
       total_owed:tempUser.total_owed}
-      return res.status(201).json(user);    
+      return res.status(201).json(new apiResponse("success",user,"your specific user"));   
     }
     else{
       const user={user_id:tempUser.user_id,name: tempUser.name,email:tempUser.email,
       }
-      return res.status(201).json(user);    
+      return res.status(201).json(new apiResponse("success",user,"your specific user"));    
     }
-   
-    res.status(201).json(user);    
    }catch(error){
-    res.status(500).json({ message: error });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
    }
 }
-
-
 
 module.exports = {
   signup,
   signin,
   allUser,
-  specificUser
+  specificUser,
 };
 

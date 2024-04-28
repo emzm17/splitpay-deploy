@@ -1,48 +1,81 @@
 // services/friendService.js
 const db = require('../utils/database');
 const redisClient=require('../utils/redis');
+
+
+
 const getFriendRequests = async (userId) => {
-  try {
-    const friendRequests = await db.query('SELECT * FROM friendships WHERE user2_id = $1', [userId]);
-    let friend=[]
-    for(let i=0;i<friendRequests.rows.length;i++){
-           const userid=friendRequests.rows[i].user1_id
-           const friendrequest=await db.query('select * from users where user_id=$1',[userid])
-           const User={
-              user_id:friendrequest.rows[0].user_id,
-              email:friendrequest.rows[0].email,
-              name:friendrequest.rows[0].name
-           }
-           friend.push(User)
+    try {
+      const friendRequests = await db.query('SELECT * FROM friendships WHERE user2_id = $1', [userId]);
+      let friend=[]
+      for(let i=0;i<friendRequests.rows.length;i++){
+             const userid=friendRequests.rows[i].user1_id
+             const friendrequest=await db.query('select * from users where user_id=$1',[userid])
+             const User={
+                user_id:friendrequest.rows[0].user_id,
+                email:friendrequest.rows[0].email,
+                name:friendrequest.rows[0].name
+             }
+             friend.push(User)
+      }
+      return friend;
+    } catch (error) {
+      console.log(error);
+      throw new Error('internal server error');
     }
-    return friend;
-  } catch (error) {
-    console.log(error);
-    throw new Error('internal server error');
-  }
 };
 const acceptFriendRequest = async (userId, friendId) => {
   try {
     const currentUser = await db.query('SELECT * FROM users WHERE user_id = $1', [userId]);
     const friendUser = await db.query('SELECT * FROM users WHERE user_id = $1', [friendId]);
 
-    let friendlist=currentUser.rows[0].friend_list;
-    let friendlist1=friendUser.rows[0].friend_list;
+    let friendlist1=[]
+    if(currentUser.rows[0].friend_list==null){
+             const friend={
+                    user_id:friendUser.rows[0].user_id,
+                    name:friendUser.rows[0].name,
+                    email:friendUser.rows[0].email
+             }
+            
+             friendlist1.push(friend)
+    }
+    else{
+      const friend={
+        user_id:friendUser.rows[0].user_id,
+        name:friendUser.rows[0].name,
+        email:friendUser.rows[0].email
+    }
+    friendlist1 = [...currentUser.rows[0].friend_list];
+    friendlist1.push(friend)
 
-  
-    friendlist.push(parseInt(friendId));
-    friendlist1.push(parseInt(userId));
+    }
+    let friendlist2=[]
+    if(friendUser.rows[0].friend_list==null){
+      const friend={
+             user_id:currentUser.rows[0].user_id,
+             name:currentUser.rows[0].name,
+             email:currentUser.rows[0].email
+      }
+     
+      friendlist2.push(friend)
+    }
+    else{
+      const friend={
+             user_id:currentUser.rows[0].user_id,
+             name:currentUser.rows[0].name,
+             email:currentUser.rows[0].email
+      }
+      friendlist2 = [...friendUser.rows[0].friend_list];
+      friendlist2.push(friend)
+    }
 
-    
-    // console.log(friendlist)
-    // console.log(friendlist1)
-
+    // console.log(friendlist1,friendlist2)
     await db.query('UPDATE users SET friend_list = $1 WHERE user_id = $2', [
-      JSON.stringify(friendlist),
+      JSON.stringify(friendlist1),
       userId,
     ]);
     await db.query('UPDATE users SET friend_list = $1 WHERE user_id = $2', [
-      JSON.stringify(friendlist1),
+      JSON.stringify(friendlist2),
       friendId,
     ]);
 
@@ -59,33 +92,20 @@ const acceptFriendRequest = async (userId, friendId) => {
 };
 
 const getAllFriends = async (userId) => {
-  const keyName = 'allfriends';
+  const keyName = 'getallfriends'+userId;
   const cached = await redisClient.get(keyName);
-
   if (cached) {
     return JSON.parse(cached);
   } else {
     try {
       const friends = await db.query('SELECT * FROM users WHERE user_id =$1', [userId]);
-      // console.log(friends.rows[0]);
       let friendlist=[]
+      if(friends.rows[0].friend_list!=null){
       for(let i=0;i<friends.rows[0].friend_list.length;i++){
-         const friendID=friends.rows[0].friend_list[i];
-         if(friendID!=userId){
-            const user=await db.query('select * from users where user_id=$1',[friendID])
-            const currUser=user.rows[0];
-            const modifiedUsers ={
-                user_id: currUser.user_id,
-                name: currUser.name,
-                email: currUser.email
-            };
-            
-            friendlist.push(modifiedUsers);
+         const friend=friends.rows[0].friend_list[i]
+            friendlist.push(friend);
          }
-       
-        
       }
-
       redisClient.set(keyName, JSON.stringify(friendlist), { EX: 30 });
       return friendlist;
     } catch (error) {
@@ -95,37 +115,30 @@ const getAllFriends = async (userId) => {
   }
 };
 
+const checkUser= async(friendId)=>{
+ return await db.query('SELECT * FROM users WHERE user_id = $1', [friendId]);
+}
+
+
+
+const checkRequest=async(userId,friendId)=>{
+  return await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
+}
+
 const sendFriendRequest = async (userId, friendId) => {
   try {
-    const checkUser = await db.query('SELECT * FROM users WHERE user_id = $1', [friendId]);
-
-    if (checkUser.rows.length == 0) {
-      return { message: 'no user found' };
-    }
-
-    const currUser = await db.query('SELECT * FROM users WHERE user_id = $1', [userId])
-    const friendList=currUser.rows[0].friend_list
-    for (let j = 0; j < friendList.length; j++) {
-      if (friendId == parseInt(friendList[j])) {
-        return { message: 'user already in friend list' };
-      }
-    }
-
-
-    const userList = await db.query('SELECT * FROM friendships WHERE user1_id = $1 AND user2_id = $2', [userId,friendId]);
-
-    if(userList.rows.length>0){
-       return {message:'already sent friend request'}
-    }
-   
-    await db.query('INSERT INTO friendships (user1_id, user2_id) VALUES ($1, $2)', [
+    const user1=await db.query('select * from users where user_id=$1',[userId])
+    const user2=await db.query('select * from users where user_id=$1',[friendId]);
+    const sender={name:user1.rows[0].name,email:user1.rows[0].email,user_id:user1.rows[0].user_id}
+    const recevier={name:user2.rows[0].name,email:user2.rows[0].email,user_id:user2.rows[0].user_id}
+    await db.query('INSERT INTO friendships (user1_id,user2_id,user1, user2) VALUES ($1, $2,$3,$4)', [
       userId,
       friendId,
+      JSON.stringify(sender),
+      JSON.stringify(recevier)
     ]);
-
     return { message: 'friend request sent successfully' };
   } catch (error) {
-    console.log(error);
     throw new Error('internal server error');
   }
 };
@@ -141,5 +154,7 @@ module.exports = {
   acceptFriendRequest,
   getAllFriends,
   sendFriendRequest,
-  friendUpdate
+  friendUpdate,
+  checkUser,
+  checkRequest
 };

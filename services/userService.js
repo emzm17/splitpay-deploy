@@ -26,14 +26,34 @@ const specificUser=async(userId)=>{
     return specUser;
   } catch (error) {
     console.error(error);
-    throw new Error('No user present');
+    throw new Error('something went wrong');
   }
 }
 
-const getAlluser=async=>{
+const getAlluser=async(userId)=>{
    try{
-    const allUser=db.query('select * from users')
-    return allUser
+    const allUser=await db.query('select * from users')
+    const specificUser=await db.query(`select * from users where user_id=$1`, [
+      userId
+   ]);
+  //  console.log(allUser.rows);
+  //  console.log(specificUser.rows[0]);
+   const users=[]
+   let friendMap={}
+   if(specificUser.rows[0].friend_list!=null){
+    for(let i=0;i<specificUser.rows[0].friend_list.length;i++){
+      const friendUser=specificUser.rows[0].friend_list[i]
+      friendMap[friendUser.email]=true
+}
+   }  
+  //  console.log(friendMap);
+   for(let i=0;i<allUser.rows.length;i++){
+         const user=allUser.rows[i]
+         if(!friendMap.hasOwnProperty(user.email) && user.user_id!=userId){
+           users.push(user)
+         }
+   }
+    return users
    }catch(error){
      throw new Error('something went wrong')
    }
@@ -44,10 +64,26 @@ const updateFriendlist=async(friendlist,userid)=>{
     'update users set friend_list=$1 where user_id=$2',[JSON.stringify(friendlist),userid]
    )
 }
+
+
+async function comparePasswords(password, hashedPassword) {
+  return new Promise((resolve, reject) => {
+    bcryptjs.compare(password, hashedPassword, (err, result) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+}
+
+
 module.exports = {
   getUserByEmail,
   createUser,
   getAlluser,
   specificUser,
-  updateFriendlist
+  updateFriendlist,
+  comparePasswords
 };

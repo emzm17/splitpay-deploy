@@ -7,17 +7,25 @@ const {
   createExpense,
 } = require("../services/expenseService");
 
+
+const { apiError } = require('../utils/apiError');
+const { apiResponse } = require('../utils/apiResponse');
+const { expenseSchema } = require("../utils/validator");
+
 // Handler for fetching all expenses
 const getAllExpense = async (req, res) => {
   try {
     const expenses = await getAllExpenses();
     if (expenses.length < 1) {
-      return res.status(404).json({ message: "No expense found" });
+       throw new apiError(404,"no expense found")
     }
-    return res.status(200).json(expenses);
+    return res.status(200).json(new apiResponse("success",expenses,"all expense"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 
@@ -26,13 +34,17 @@ const getParticularExpenseHandler = async (req, res) => {
   try {
     const id = req.params.id;
     const expenses = await getParticularGroupExpense(id);
-    if (expenses.length === 0) {
-      return res.status(404).json({ message: "No expense found" });
+    if (expenses.length < 1) {
+      throw new apiError(404,"no expense found")
     }
-    return res.status(200).json(expenses);
+    return res.status(200).json(new apiResponse("success",expenses,"get particular group expense"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    error.status=error.statusCode || 500
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 
@@ -42,29 +54,39 @@ const particularExpenseController = async (req, res) => {
     const particularExpense = await getParticularExpense(id);
 
     if (!particularExpense) {
-      return res.status(404).json({ message: "No expense found" });
+      throw new apiError(404,"no expense found")
     }
 
-    return res.status(200).json(particularExpense);
+    return res.status(200).json(new apiResponse("success",particularExpense,"get particular expense"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Something went wrong" });
+    res.status(error.statusCode).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 
 const createExpenseController = async (req, res) => {
   try {
-    const { amount, description, payer_id, group_id } = req.body;
+    const { amount, description, payer, group_id } = req.body;
+    const requestBody={amount:amount,description:description,payer:payer,group_id:group_id}
+    const result=await expenseSchema.validateAsync(requestBody)
     const message = await createExpense(
-      amount,
-      description,
-      payer_id,
-      group_id
+      result.amount,
+      result.description,
+      result.payer,
+      result.group_id
     );
-    res.status(201).json(message);
+    res.status(201).json(new apiResponse("success",message,"new expense created"));
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong" });
+    if(error.isJoi===true)error.status = 422
+    else error.status=error.statusCode || 500
+    res.status(error.status).json({
+      status: "error",
+      data: null,
+      message:error.message
+    })
   }
 };
 
