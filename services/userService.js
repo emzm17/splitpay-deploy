@@ -36,13 +36,17 @@ const getAlluser=async(userId)=>{
     const specificUser=await db.query(`select * from users where user_id=$1`, [
       userId
    ]);
+  //  console.log(allUser.rows);
+  //  console.log(specificUser.rows[0]);
    const users=[]
    let friendMap={}
-   for(let i=0;i<specificUser.rows[0].friend_list.length;i++){
-           const friendUser=specificUser.rows[0].friend_list[i]
-           friendMap[friendUser.email]=true
-   }
-   console.log(friendMap);
+   if(specificUser.rows[0].friend_list!=null){
+    for(let i=0;i<specificUser.rows[0].friend_list.length;i++){
+      const friendUser=specificUser.rows[0].friend_list[i]
+      friendMap[friendUser.email]=true
+}
+   }  
+  //  console.log(friendMap);
    for(let i=0;i<allUser.rows.length;i++){
          const user=allUser.rows[i]
          if(!friendMap.hasOwnProperty(user.email) && user.user_id!=userId){

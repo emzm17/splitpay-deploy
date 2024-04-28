@@ -100,10 +100,12 @@ const getAllFriends = async (userId) => {
     try {
       const friends = await db.query('SELECT * FROM users WHERE user_id =$1', [userId]);
       let friendlist=[]
+      if(friends.rows[0].friend_list!=null){
       for(let i=0;i<friends.rows[0].friend_list.length;i++){
          const friend=friends.rows[0].friend_list[i]
             friendlist.push(friend);
          }
+      }
       redisClient.set(keyName, JSON.stringify(friendlist), { EX: 30 });
       return friendlist;
     } catch (error) {

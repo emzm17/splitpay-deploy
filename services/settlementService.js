@@ -61,7 +61,7 @@ function minimun_amount(amount){
             const expenses = await db.query(`select * from expenses where group_id=$1`, [groupId]);
             const group = await db.query(`select * from group_s where id=$1`, [groupId]);
             // const delete_expense = await db.query('delete from expenses where group_id=$1',[id]);
-            // console.log(expenses);
+            // console.log(expenses.rows);
             // console.log(group);
             if(expenses.rows.length==0){
                 return {message:"all settlement is complete"}
@@ -82,7 +82,7 @@ function minimun_amount(amount){
             for (let i = 0; i < expenses.rows.length; i++) {
                 let expense = expenses.rows[i];
  
-                
+                // console.log(expense);
     
                 const amount = (expense.amount) / size;
                 const actualAmount=amount.toFixed(2);
@@ -90,14 +90,15 @@ function minimun_amount(amount){
                     let user_item = group.rows[0].users[idx];
                     if (user_item.user_id == expense.payer[0].user_id) {
                               continue;
-                    } else {
-                         settlement_graph.addEdge(user_item.user_id,expense.payer[0].user_id,actualAmount);
-        
-                         
+                    } else {                
+                        const initialAmount=settlement_graph.adjMatrix[user_item.user_id][expense.payer[0].user_id]
+                        const finalAmount=parseInt(actualAmount)+initialAmount  
+                        settlement_graph.addEdge(user_item.user_id,expense.payer[0].user_id,finalAmount);
                     }
                 }
             }
   
+      
     
             // row-paye
             // colu-receive
@@ -112,22 +113,27 @@ function minimun_amount(amount){
                 }
              }      
              
- 
-        min_cash_flow(amount);
+   
+             min_cash_flow(amount);
 
             
-            
+      
             let settlement=[]
             for(let i=0;i<logEntries.length;i++){
                   const payer=logEntries[i].payer
                   const payee=logEntries[i].payee
+   
 
                   const updateAmount = await db.query(
                     `select * from users where user_id=$1`,[payer]
                   );
                   // console.log(updateAmount);
                   // console.log((updateAmount[0][0].totalOwe));
-                  const updateAmounttotalOwe=parseInt(updateAmount.rows[0].total_owe)-logEntries[i].amount;
+                  let updateAmounttotalOwe=parseInt(updateAmount.rows[0].total_owe)-logEntries[i].amount;
+                  // console.log(updateAmounttotalOwe)
+                  if(updateAmounttotalOwe<0){
+                    updateAmounttotalOwe=0
+                  }
                
                 // //   console.log(updateAmounttotalOwe)
                   const updatedAmounttotOwed = await db.query(
@@ -153,7 +159,7 @@ function minimun_amount(amount){
                    name:updatetotalAmount.rows[0].name,
                    email:updatetotalAmount.rows[0].email
                 }
-                console.log(payer1,payee1);
+              
                 const set={
                      payer:payer1,
                      payee:payee1,
