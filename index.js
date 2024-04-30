@@ -1,6 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
-dotenv.config({ path: '.env.dev' });
+dotenv.config({ path: '.env.prod' });
 const app = express();
 const PORT = process.env.PORT
 app.use(express.json()); // request body convert into Json 
